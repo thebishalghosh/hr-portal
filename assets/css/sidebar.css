@@ -1,0 +1,170 @@
+body {
+    background-color: #f8f9fa;
+    font-family: 'Arial', sans-serif !important;
+}
+
+.sidebar {
+    height: 100vh;
+    width: 250px;
+    background-color: #10202f;
+    color: white;
+    position: fixed;
+    top: 0;
+    left: 0;
+    padding-top: 20px;
+    border-right: 1px solid #34495e;
+}
+
+.sidebar .logo {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.sidebar .logo img {
+    width: 90px;
+    height: auto;
+    background: #fff;
+    border-radius: 50%;
+    padding: 5px;
+    margin-bottom: 10px;
+}
+
+.sidebar .nav-item {
+    padding: 10px 20px;
+}
+
+.sidebar .nav-link {
+    color: white;
+    font-size: 18px !important;
+    text-decoration: none;
+    display: block;
+}
+
+.sidebar .nav-link:hover {
+    background-color:rgb(163, 197, 234);
+}
+
+.sidebar .nav-link i {
+    margin-right: 10px;
+}
+
+.sidebar .logout-btn {
+    position: absolute;
+    bottom: 30px;
+    width: 100%;
+    padding: 10px 0;
+}
+
+.sidebar .logout-btn a {
+    color: #fff !important;
+    background-color: #e74c3c;
+    font-size: 14px;
+    text-align: center;
+    padding: 10px 0;
+    display: block;
+    text-decoration: none;
+}
+
+.sidebar .logout-btn a:hover {
+    background-color: #c0392b;
+    color: #fff !important;
+}
+
+@media (min-width: 992px) {
+  .main-content {
+    margin-left: 250px;
+  }
+  .sidebar.offcanvas-lg {
+    transform: none !important;
+    visibility: visible !important;
+    position: fixed;
+    left: 0;
+    top: 0;
+    height: 100vh;
+    width: 250px;
+    display: block !important;
+    background-color: #10202f;
+    color: #fff;
+    border-right: 1px solid #34495e;
+    z-index: 1045;
+  }
+  .offcanvas-backdrop {
+    display: none !important;
+  }
+}
+@media (max-width: 991.98px) {
+  .main-content {
+    margin-left: 0 !important;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .sidebar .logo img {
+    width: 60px;
+  }
+  .sidebar .nav-link {
+    font-size: 16px !important;
+    padding: 8px 10px;
+  }
+  .main-content {
+    padding: 5px;
+  }
+}
+
+/* Ensure sidebar is dark in both fixed and offcanvas modes */
+.sidebar,
+.offcanvas-lg.sidebar,
+.offcanvas.sidebar {
+    background-color: #10202f !important;
+    color: #fff !important;
+}
+
+.sidebar .nav-link,
+.sidebar .dropdown-toggle,
+.sidebar .dropdown-item {
+    color: #fff !important;
+}
+
+.sidebar .nav-link:hover,
+.sidebar .dropdown-toggle:hover,
+.sidebar .dropdown-item:hover {
+    background-color: rgb(163, 197, 234);
+    color: #10202f !important;
+}
+
+/* Make Bootstrap offcanvas sidebar scrollable */
+.offcanvas-lg.sidebar,
+.offcanvas.sidebar {
+    overflow-y: auto !important;
+    max-height: 100vh;
+}
+
+.offcanvas-body {
+    overflow-y: auto !important;
+    max-height: 100vh;
+    padding-bottom: 2rem;
+}
+
+/* Sidebar dropdown menu styling */
+.sidebar .dropdown-menu {
+    background-color: #1a2a3a;
+    color: #fff;
+    border: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+.sidebar .dropdown-menu .dropdown-item {
+    color: #fff;
+}
+.sidebar .dropdown-menu .dropdown-item:hover,
+.sidebar .dropdown-menu .dropdown-item:focus {
+    background-color: #34495e;
+    color: #fff;
+}
+
+/* Make the offcanvas close button white on mobile */
+@media (max-width: 991.98px) {
+  .sidebar .btn-close {
+    filter: invert(1) grayscale(1) brightness(2);
+    opacity: 1;
+  }
+}
