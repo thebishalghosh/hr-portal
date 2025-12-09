@@ -1,9 +1,9 @@
 <?php
 // Database configuration
-$host = 'cp-in-9';
-$dbname = 'travawko_hr';
-$username = 'travawko_hr';
-$password = 'nsg_swd5686';
+$host = 'localhost';
+$dbname = 'hr-portal';
+$username = 'root';
+$password = '';
 // Create connection
 try {
     $conn = new mysqli($host, $username, $password, $dbname);

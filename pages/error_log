@@ -65,3 +65,15 @@ Stack trace:
 [06-Aug-2025 12:27:22 UTC] PHP Warning:  Undefined array key "password" in /home1/travawko/hr.travarsa.net/hr-portal/pages/login.php on line 90
 [06-Aug-2025 12:46:51 UTC] PHP Warning:  Undefined array key "email" in /home1/travawko/hr.travarsa.net/hr-portal/pages/login.php on line 89
 [06-Aug-2025 12:46:51 UTC] PHP Warning:  Undefined array key "password" in /home1/travawko/hr.travarsa.net/hr-portal/pages/login.php on line 90
+[26-Aug-2025 05:11:57 UTC] Database connection error: Too many connections
+[26-Aug-2025 05:13:13 UTC] Database connection error: Too many connections
+[26-Aug-2025 05:13:43 UTC] Database connection error: Too many connections
+[26-Aug-2025 05:14:58 UTC] Database connection error: Too many connections
+[26-Aug-2025 05:15:59 UTC] Database connection error: Too many connections
+[26-Aug-2025 05:17:17 UTC] Database connection error: Too many connections
+[26-Aug-2025 05:20:44 UTC] Database connection error: Too many connections
+[26-Aug-2025 05:25:33 UTC] Database connection error: Too many connections
+[26-Aug-2025 05:25:52 UTC] Database connection error: Too many connections
+[26-Aug-2025 05:28:12 UTC] Database connection error: Too many connections
+[05-Sep-2025 05:25:42 UTC] PHP Warning:  Undefined array key "email" in /home1/travawko/hr.travarsa.net/hr-portal/pages/login.php on line 89
+[05-Sep-2025 05:25:42 UTC] PHP Warning:  Undefined array key "password" in /home1/travawko/hr.travarsa.net/hr-portal/pages/login.php on line 90
