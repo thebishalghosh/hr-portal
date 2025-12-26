@@ -36,14 +36,25 @@ if (!empty($candidate_email)) {
     curl_setopt($ch, CURLOPT_HTTPHEADER, [
         'X-API-KEY: ' . $exam_api_key
     ]);
+
+    // Disable SSL verification for debugging (if needed, but be careful in production)
+    // curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+
     $response = curl_exec($ch);
     $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $curl_error = curl_error($ch);
 
     if (!curl_errno($ch)) {
         $data = json_decode($response, true);
         if ($http_code === 200 && isset($data['status']) && $data['status'] === 'success' && !empty($data['assigned_exams'])) {
             $assigned_exams = $data['assigned_exams'];
+        } else {
+            // Log API error for debugging
+            error_log("Exam API Error: HTTP Code: $http_code, Response: $response");
         }
+    } else {
+        // Log cURL error
+        error_log("Exam API cURL Error: $curl_error");
     }
     curl_close($ch);
 }
