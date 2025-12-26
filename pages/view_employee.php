@@ -1,6 +1,7 @@
 <?php
 include '../includes/db_connect.php';
 include '../includes/sidebar.php';
+include '../includes/exam_api_config.php'; // Include API configuration
 
 // Check if employee_id is provided
 if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
@@ -20,6 +21,33 @@ $employee = $stmt->get_result()->fetch_assoc();
 if (!$employee) {
     header('Location: employees.php');
     exit();
+}
+
+// --- API Call to Fetch Exams for this Employee ---
+$assigned_exams = [];
+$candidate_email = isset($employee['email']) ? $employee['email'] : '';
+
+if (!empty($candidate_email)) {
+    // We don't need the session token here as we are just viewing the employee's profile as an admin/manager
+    // The API should allow fetching exams by email with the API key
+    $request_url = $exam_api_url . '?email=' . urlencode($candidate_email);
+
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $request_url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        'X-API-KEY: ' . $exam_api_key
+    ]);
+    $response = curl_exec($ch);
+    $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
+    if (!curl_errno($ch)) {
+        $data = json_decode($response, true);
+        if ($http_code === 200 && isset($data['status']) && $data['status'] === 'success' && !empty($data['assigned_exams'])) {
+            $assigned_exams = $data['assigned_exams'];
+        }
+    }
+    curl_close($ch);
 }
 
 // Fetch attendance statistics
@@ -442,6 +470,55 @@ $absent_stats = $stmt->get_result()->fetch_assoc();
                 </div>
             </div>
 
+            <!-- Exam Scores Section -->
+            <?php if (!empty($assigned_exams)): ?>
+            <div class="info-card">
+                <h4 class="section-title">Exam Scores</h4>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Exam Title</th>
+                                <th>Duration</th>
+                                <th>Status</th>
+                                <th>Score</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($assigned_exams as $exam): ?>
+                                <tr>
+                                    <td><?php echo htmlspecialchars($exam['title']); ?></td>
+                                    <td><?php echo htmlspecialchars($exam['duration']); ?> mins</td>
+                                    <td>
+                                        <?php
+                                        $status = isset($exam['status']) ? strtolower($exam['status']) : 'assigned';
+                                        $badgeClass = 'secondary';
+                                        if ($status === 'completed') $badgeClass = 'success';
+                                        elseif ($status === 'disqualified') $badgeClass = 'danger';
+                                        elseif ($status === 'started') $badgeClass = 'info';
+                                        elseif ($status === 'assigned') $badgeClass = 'primary';
+                                        ?>
+                                        <span class="badge bg-<?php echo $badgeClass; ?>">
+                                            <?php echo ucfirst($status); ?>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <?php
+                                        if (isset($exam['score']) && $exam['score'] !== null) {
+                                            echo '<span class="fw-bold text-success">' . htmlspecialchars($exam['score']) . '</span>';
+                                        } else {
+                                            echo '<span class="text-muted">-</span>';
+                                        }
+                                        ?>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <?php endif; ?>
+
             <!-- Performance Reviews -->
             <div class="info-card">
                 <h4 class="section-title">Performance Reviews</h4>
@@ -522,4 +599,4 @@ $absent_stats = $stmt->get_result()->fetch_assoc();
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
-</html> 
+</html>

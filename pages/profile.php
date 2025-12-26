@@ -2,6 +2,7 @@
 include '../includes/auth.php';
 include '../includes/db_connect.php';
 include '../includes/sidebar.php';
+include '../includes/exam_api_config.php'; // Include API configuration
 
 $user_id = $_SESSION['user_id'];
 
@@ -12,6 +13,34 @@ $stmt->bind_param("i", $user_id);
 $stmt->execute();
 $result = $stmt->get_result();
 $user = $result->fetch_assoc();
+
+// --- API Call to Fetch Exams for Logged-in User ---
+$assigned_exams = [];
+$candidate_email = isset($user['email']) ? $user['email'] : '';
+
+if (!empty($candidate_email)) {
+    // We don't strictly need the session token here if we just want to view scores,
+    // but passing it is good practice if the API expects it for context.
+    // Since we are just viewing the profile, we can fetch by email.
+    $request_url = $exam_api_url . '?email=' . urlencode($candidate_email);
+
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $request_url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        'X-API-KEY: ' . $exam_api_key
+    ]);
+    $response = curl_exec($ch);
+    $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
+    if (!curl_errno($ch)) {
+        $data = json_decode($response, true);
+        if ($http_code === 200 && isset($data['status']) && $data['status'] === 'success' && !empty($data['assigned_exams'])) {
+            $assigned_exams = $data['assigned_exams'];
+        }
+    }
+    curl_close($ch);
+}
 
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
@@ -410,6 +439,59 @@ $reviews = $stmt->get_result();
                 </div>
             </div>
 
+            <!-- Exam Scores Section -->
+            <?php if (!empty($assigned_exams)): ?>
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Exam Scores</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Exam Title</th>
+                                    <th>Duration</th>
+                                    <th>Status</th>
+                                    <th>Score</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($assigned_exams as $exam): ?>
+                                    <tr>
+                                        <td><?php echo htmlspecialchars($exam['title']); ?></td>
+                                        <td><?php echo htmlspecialchars($exam['duration']); ?> mins</td>
+                                        <td>
+                                            <?php
+                                            $status = isset($exam['status']) ? strtolower($exam['status']) : 'assigned';
+                                            $badgeClass = 'secondary';
+                                            if ($status === 'completed') $badgeClass = 'success';
+                                            elseif ($status === 'disqualified') $badgeClass = 'danger';
+                                            elseif ($status === 'started') $badgeClass = 'info';
+                                            elseif ($status === 'assigned') $badgeClass = 'primary';
+                                            ?>
+                                            <span class="badge bg-<?php echo $badgeClass; ?>">
+                                                <?php echo ucfirst($status); ?>
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <?php
+                                            if (isset($exam['score']) && $exam['score'] !== null) {
+                                                echo '<span class="fw-bold text-success">' . htmlspecialchars($exam['score']) . '</span>';
+                                            } else {
+                                                echo '<span class="text-muted">-</span>';
+                                            }
+                                            ?>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <?php endif; ?>
+
             <!-- Detailed Information -->
             <div class="row mt-4">
                 <!-- Personal Information -->
@@ -507,4 +589,4 @@ $reviews = $stmt->get_result();
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 </body>
-</html> 
+</html>

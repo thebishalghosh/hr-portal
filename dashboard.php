@@ -2,6 +2,7 @@
 session_start();
 include 'includes/db_connect.php';
 include 'includes/auth.php';
+include 'includes/exam_api_config.php'; // Include API configuration
 
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
@@ -17,6 +18,35 @@ $stmt->bind_param("i", $user_id);
 $stmt->execute();
 $user_result = $stmt->get_result();
 $user = $user_result->fetch_assoc();
+
+// --- API Call to Fetch Exams (Moved to top) ---
+$assigned_exams = [];
+$candidate_email = isset($user['email']) ? $user['email'] : '';
+
+if (!empty($candidate_email)) {
+    // Get the session token from the current session
+    $user_session_token = isset($_SESSION['session_token']) ? $_SESSION['session_token'] : '';
+
+    // Append email and session_token to the API request URL
+    $request_url = $exam_api_url . '?email=' . urlencode($candidate_email) . '&session_token=' . urlencode($user_session_token);
+
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $request_url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        'X-API-KEY: ' . $exam_api_key
+    ]);
+    $response = curl_exec($ch);
+    $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
+    if (!curl_errno($ch)) {
+        $data = json_decode($response, true);
+        if ($http_code === 200 && isset($data['status']) && $data['status'] === 'success' && !empty($data['assigned_exams'])) {
+            $assigned_exams = $data['assigned_exams'];
+        }
+    }
+    curl_close($ch);
+}
 
 // Get today's attendance
 $today = date('Y-m-d');
@@ -145,6 +175,34 @@ $leaves_result = $stmt->get_result();
             margin-top: auto;
             padding-top: 15px;
         }
+
+        /* Exam Notification Styles */
+        .exam-notification {
+            border-left: 5px solid #0d6efd !important;
+            animation: slideInDown 0.5s ease-out;
+            background-color: #fff;
+        }
+
+        @keyframes slideInDown {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .btn-pulse {
+            animation: pulse-blue 2s infinite;
+        }
+
+        @keyframes pulse-blue {
+            0% {
+                box-shadow: 0 0 0 0 rgba(13, 110, 253, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(13, 110, 253, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(13, 110, 253, 0);
+            }
+        }
     </style>
 </head>
 <body>
@@ -165,6 +223,53 @@ $leaves_result = $stmt->get_result();
                 ?>!</h2>
                 <p class="mb-0"><?php echo date('l, F j, Y'); ?></p>
             </div>
+
+            <!-- Assigned Exams Section (Displayed only if exams exist) -->
+            <?php if (!empty($assigned_exams)): ?>
+            <div class="row">
+                <div class="col-12 mb-4">
+                    <div class="card border-0 shadow-sm exam-notification">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center justify-content-between mb-3">
+                                <div>
+                                    <h4 class="text-primary mb-1"><i class="fas fa-clipboard-list me-2"></i>Assigned Exams Available</h4>
+                                    <p class="mb-0 text-muted">You have pending exams to complete.</p>
+                                </div>
+                            </div>
+                            <div class="list-group list-group-flush">
+                                <?php foreach ($assigned_exams as $exam): ?>
+                                <div class="list-group-item d-flex justify-content-between align-items-center bg-transparent px-0">
+                                    <div>
+                                        <h5 class="mb-1 fw-bold"><?php echo htmlspecialchars($exam['title']); ?></h5>
+                                        <p class="mb-1 small text-muted"><?php echo htmlspecialchars($exam['description']); ?></p>
+                                        <span class="badge bg-info text-dark"><i class="far fa-clock me-1"></i><?php echo htmlspecialchars($exam['duration']); ?> mins</span>
+                                    </div>
+
+                                    <?php
+                                    $status = isset($exam['status']) ? strtolower($exam['status']) : 'assigned';
+                                    if ($status === 'completed' || $status === 'disqualified'):
+                                    ?>
+                                        <div class="text-end">
+                                            <span class="badge bg-<?php echo $status === 'completed' ? 'success' : 'danger'; ?> mb-1">
+                                                <?php echo ucfirst($status); ?>
+                                            </span>
+                                            <?php if (isset($exam['score']) && $exam['score'] !== null): ?>
+                                                <div class="fw-bold text-success">Score: <?php echo htmlspecialchars($exam['score']); ?></div>
+                                            <?php endif; ?>
+                                        </div>
+                                    <?php else: ?>
+                                        <a href="<?php echo htmlspecialchars($exam['start_link']); ?>" class="btn btn-primary btn-pulse" target="_blank">
+                                            Start Exam <i class="fas fa-arrow-right ms-2"></i>
+                                        </a>
+                                    <?php endif; ?>
+                                </div>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <?php endif; ?>
 
             <div class="row">
                 <!-- Today's Attendance -->
@@ -319,6 +424,7 @@ $leaves_result = $stmt->get_result();
                     </div>
                 </div>
             </div>
+
         </div>
     </div>
 
