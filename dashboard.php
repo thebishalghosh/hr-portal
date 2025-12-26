@@ -1,6 +1,6 @@
 <?php
 session_start();
-include 'includes/db_connect.php';
+// db_connect.php is included inside auth.php, so we don't need to include it here again
 include 'includes/auth.php';
 include 'includes/exam_api_config.php'; // Include API configuration
 
@@ -33,9 +33,13 @@ if (!empty($candidate_email)) {
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $request_url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, [
-        'X-API-KEY: ' . $exam_api_key
-    ]);
+
+    // Ensure API key is trimmed and header is correctly formatted
+    $headers = [
+        'X-API-KEY: ' . trim($exam_api_key),
+        'Content-Type: application/json'
+    ];
+    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
 
     // Disable SSL verification for debugging (if needed, but be careful in production)
     // curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
