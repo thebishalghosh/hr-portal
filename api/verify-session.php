@@ -35,9 +35,9 @@ if (empty($session_token)) {
 require_once '../includes/db_connect.php';
 
 try {
-    // Prepare query to verify session and get user email in one go
+    // Prepare query to verify session and get user email and role in one go
     $query = "
-        SELECT e.email
+        SELECT e.email, e.role
         FROM user_sessions s
         JOIN employees e ON s.employee_id = e.employee_id
         WHERE s.session_token = ?
@@ -58,11 +58,16 @@ try {
     if ($result->num_rows === 1) {
         $user = $result->fetch_assoc();
 
-        // Session is valid, return success and email
+        // Map internal role to external role
+        // 'user' -> 'candidate', 'admin' -> 'admin'
+        $role = strtolower($user['role']) === 'admin' ? 'admin' : 'candidate';
+
+        // Session is valid, return success, email, and role
         http_response_code(200);
         echo json_encode([
             'status' => 'success',
-            'user_email' => $user['email']
+            'user_email' => $user['email'],
+            'role' => $role
         ]);
     } else {
         // Session not found, expired, or inactive

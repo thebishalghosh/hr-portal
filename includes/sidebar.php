@@ -82,6 +82,13 @@ include 'auth.php';
                 </ul>
             </div>
             <?php endif; ?>
+
+            <?php if ($_SESSION['user_role'] == 'admin'): ?>
+                <a href="http://localhost/exam/login/sso?session_token=<?php echo isset($_SESSION['session_token']) ? htmlspecialchars($_SESSION['session_token']) : ''; ?>" class="nav-link" target="_blank">
+                    <i class="fas fa-graduation-cap"></i> Exam Portal
+                </a>
+            <?php endif; ?>
+
             <div class="dropdown">
                 <a class="nav-link dropdown-toggle" href="#" id="leaveDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                     <i class="fas fa-calendar-check"></i> Leaves
