@@ -34,6 +34,9 @@ if (!empty($candidate_email)) {
     curl_setopt($ch, CURLOPT_URL, $request_url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
+    // Force HTTP/1.1 to avoid potential HTTP/2 header casing issues on loopback requests
+    curl_setopt($ch, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
+
     // Ensure API key is trimmed and header is correctly formatted
     $headers = [
         'X-API-KEY: ' . trim($exam_api_key),
@@ -42,7 +45,8 @@ if (!empty($candidate_email)) {
     curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
 
     // Disable SSL verification for debugging (if needed, but be careful in production)
-    // curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
 
     $response = curl_exec($ch);
     $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
