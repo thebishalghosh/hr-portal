@@ -2,6 +2,17 @@
 // Include the database connection file
 include 'db_connect.php';
 include 'auth.php';
+
+// Count pending leaves for admin badge
+$pending_leaves_count = 0;
+if (isset($_SESSION['user_role']) && $_SESSION['user_role'] == 'admin') {
+    $count_query = "SELECT COUNT(*) as count FROM leaves WHERE status = 'Pending'";
+    $count_result = $conn->query($count_query);
+    if ($count_result) {
+        $row = $count_result->fetch_assoc();
+        $pending_leaves_count = $row['count'];
+    }
+}
 ?>
 
 <!-- Add favicon -->
@@ -90,12 +101,22 @@ include 'auth.php';
             <?php endif; ?>
 
             <div class="dropdown">
-                <a class="nav-link dropdown-toggle" href="#" id="leaveDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                    <i class="fas fa-calendar-check"></i> Leaves
+                <a class="nav-link dropdown-toggle d-flex align-items-center justify-content-between" href="#" id="leaveDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    <span><i class="fas fa-calendar-check"></i> Leaves</span>
+                    <?php if ($pending_leaves_count > 0): ?>
+                        <span class="badge bg-danger rounded-pill" style="font-size: 0.7rem;"><?php echo $pending_leaves_count; ?></span>
+                    <?php endif; ?>
                 </a>
                 <ul class="dropdown-menu" aria-labelledby="leaveDropdown">
                     <li><a class="dropdown-item" href="/hr-portal/pages/request_leave.php">Request Leave</a></li>
-                    <li><a class="dropdown-item" href="/hr-portal/pages/view_leave.php">View Leaves</a></li>
+                    <li>
+                        <a class="dropdown-item d-flex justify-content-between align-items-center" href="/hr-portal/pages/view_leave.php">
+                            View Leaves
+                            <?php if ($pending_leaves_count > 0): ?>
+                                <span class="badge bg-danger rounded-pill" style="font-size: 0.6rem;"><?php echo $pending_leaves_count; ?></span>
+                            <?php endif; ?>
+                        </a>
+                    </li>
                 </ul>
             </div>
             <!-- Logout Button -->
