@@ -615,6 +615,7 @@ $message = isset($_GET['message']) ? $_GET['message'] : '';
                         echo '<th><i class="fas fa-sign-in-alt me-2"></i>Check-In</th>';
                         echo '<th><i class="fas fa-sign-out-alt me-2"></i>Check-Out</th>';
                         echo '<th><i class="fas fa-comment me-2"></i>Remarks</th>';
+                        echo '<th><i class="fas fa-cog me-2"></i>Action</th>'; // Added Action Column
                         echo '</tr>';
                         echo '</thead>';
                         echo '<tbody>';
@@ -628,17 +629,22 @@ $message = isset($_GET['message']) ? $_GET['message'] : '';
                             $check_in_time = $row['check_in_time'] ?: '';
                             $check_out_time = $row['check_out_time'] ?: '';
 
+                            // Determine button state based on whether a record exists
+                            $record_exists = !empty($row['status']);
+                            $btn_class = $record_exists ? 'btn-success' : 'btn-primary';
+                            $btn_icon = $record_exists ? 'fa-check' : 'fa-save';
+
                             // Display department header if it changes
                             if ($department != $current_department) {
                                 $current_department = $department;
                                 echo '<tr>';
-                                echo '<td colspan="8" class="department-header">';
+                                echo '<td colspan="9" class="department-header">'; // Updated colspan
                                 echo '<i class="fas fa-users me-2"></i>' . $department . ' Department';
                                 echo '</td>';
                                 echo '</tr>';
                             }
 
-                            echo '<tr>';
+                            echo '<tr id="row-' . $employee_id . '">';
                             echo '<td>';
                             echo '<div class="d-flex align-items-center">';
                             echo '<div class="avatar-circle me-3">';
@@ -654,17 +660,25 @@ $message = isset($_GET['message']) ? $_GET['message'] : '';
                             // echo '<td><span class="badge bg-primary">' . htmlspecialchars($row['branch']) . '</span></td>';
                             // echo '<td><span class="badge bg-secondary">' . htmlspecialchars($row['shift']) . '</span></td>';
                             echo '<td>';
-                            echo '<select class="form-select form-select-sm status-select" name="status[]" required>';
+                            echo '<select class="form-select form-select-sm status-select" name="status[]" id="status-' . $employee_id . '" required>';
                             echo '<option value="Present" ' . ($attendance_status == 'Present' ? 'selected' : '') . '>✓ Present</option>';
                             echo '<option value="Absent" ' . ($attendance_status == 'Absent' ? 'selected' : '') . '>✗ Absent</option>';
                             echo '<option value="Leave" ' . ($attendance_status == 'Leave' ? 'selected' : '') . '>📅 Leave</option>';
                             echo '</select>';
                             echo '</td>';
-                            echo '<td><input type="time" class="form-control form-control-sm" name="check_in_time[]" value="' . $check_in_time . '"></td>';
-                            echo '<td><input type="time" class="form-control form-control-sm" name="check_out_time[]" value="' . $check_out_time . '"></td>';
-                            echo '<td><input type="text" class="form-control form-control-sm" name="remarks[]" value="' . $attendance_remarks . '" placeholder="Optional remarks"></td>';
+                            echo '<td><input type="time" class="form-control form-control-sm" name="check_in_time[]" id="check_in-' . $employee_id . '" value="' . $check_in_time . '"></td>';
+                            echo '<td><input type="time" class="form-control form-control-sm" name="check_out_time[]" id="check_out-' . $employee_id . '" value="' . $check_out_time . '"></td>';
+                            echo '<td><input type="text" class="form-control form-control-sm" name="remarks[]" id="remarks-' . $employee_id . '" value="' . $attendance_remarks . '" placeholder="Optional remarks"></td>';
                             echo '<input type="hidden" name="employee_id[]" value="' . $employee_id . '">';
                             echo '<input type="hidden" name="attendance_date[]" value="' . $selected_date . '">';
+
+                            // Action Button
+                            echo '<td>';
+                            echo '<button type="button" class="btn btn-sm ' . $btn_class . ' save-btn" onclick="saveRow(' . $employee_id . ')">';
+                            echo '<i class="fas ' . $btn_icon . '"></i>';
+                            echo '</button>';
+                            echo '</td>';
+
                             echo '</tr>';
                         }
 
@@ -679,7 +693,7 @@ $message = isset($_GET['message']) ? $_GET['message'] : '';
                         echo 'Total: ' . $total_employees . ' employees';
                         echo '</div>';
                         echo '<button type="submit" class="btn btn-save-attendance">';
-                        echo '<i class="fas fa-save me-2"></i>Save Attendance Records';
+                        echo '<i class="fas fa-save me-2"></i>Save All Records';
                         echo '</button>';
                         echo '</div>';
                         echo '</div>';
@@ -700,6 +714,57 @@ $message = isset($_GET['message']) ? $_GET['message'] : '';
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        // Function to save individual row
+        function saveRow(employeeId) {
+            const btn = document.querySelector(`#row-${employeeId} .save-btn`);
+
+            // Show loading
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            btn.disabled = true;
+
+            const data = {
+                employee_id: employeeId,
+                date: '<?php echo $selected_date; ?>',
+                status: document.getElementById(`status-${employeeId}`).value,
+                check_in_time: document.getElementById(`check_in-${employeeId}`).value,
+                check_out_time: document.getElementById(`check_out-${employeeId}`).value,
+                remarks: document.getElementById(`remarks-${employeeId}`).value
+            };
+
+            fetch('/hr-portal/api/update_attendance.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    btn.innerHTML = '<i class="fas fa-check"></i>';
+                    btn.classList.remove('btn-primary');
+                    btn.classList.add('btn-success');
+                    btn.disabled = false;
+                    // Button stays green until changed
+                } else {
+                    alert('Error: ' + data.message);
+                    resetButton(btn);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while saving.');
+                resetButton(btn);
+            });
+        }
+
+        function resetButton(btn) {
+            btn.innerHTML = '<i class="fas fa-save"></i>';
+            btn.classList.remove('btn-success');
+            btn.classList.add('btn-primary');
+            btn.disabled = false;
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
             // Auto-submit when any filter changes
             ['attendance_date', 'branch', 'shift', 'college'].forEach(id => {
@@ -708,11 +773,41 @@ $message = isset($_GET['message']) ? $_GET['message'] : '';
                 });
             });
 
+            // Add change listeners to all inputs to reset button state
+            const inputs = document.querySelectorAll('.status-select, input[name="check_in_time[]"], input[name="check_out_time[]"], input[name="remarks[]"]');
+            inputs.forEach(input => {
+                input.addEventListener('change', function() {
+                    // Find the parent row
+                    const row = this.closest('tr');
+                    if (row) {
+                        const btn = row.querySelector('.save-btn');
+                        if (btn) {
+                            resetButton(btn);
+                        }
+                    }
+                });
+
+                // Also listen for input events on text fields for immediate feedback
+                if (input.tagName === 'INPUT') {
+                    input.addEventListener('input', function() {
+                        const row = this.closest('tr');
+                        if (row) {
+                            const btn = row.querySelector('.save-btn');
+                            if (btn) {
+                                resetButton(btn);
+                            }
+                        }
+                    });
+                }
+            });
+
             // Mark all present button functionality
             document.getElementById('markAllPresent').addEventListener('click', function() {
                 const statusSelects = document.querySelectorAll('.status-select');
                 statusSelects.forEach(select => {
                     select.value = 'Present';
+                    // Trigger change event to reset buttons
+                    select.dispatchEvent(new Event('change'));
                 });
                 
                 // Show feedback
@@ -997,8 +1092,3 @@ $message = isset($_GET['message']) ? $_GET['message'] : '';
     </script>
 </body>
 </html>
-
-<?php
-// Close the connection
-$conn->close();
-?>
