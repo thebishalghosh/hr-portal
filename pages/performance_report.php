@@ -273,9 +273,11 @@ $top_performers_result = $top_stmt->get_result();
                                                 </div>
                                             </td>
                                             <td>
-                                                <a href="view_employee.php?id=<?php echo $performer['employee_id']; ?>" class="btn btn-sm btn-outline-primary">
-                                                    <i class="fas fa-eye"></i>
-                                                </a>
+                                                <button type="button" class="btn btn-sm btn-outline-primary view-reviews-btn"
+                                                        data-id="<?php echo $performer['employee_id']; ?>"
+                                                        data-name="<?php echo htmlspecialchars($performer['full_name']); ?>">
+                                                    <i class="fas fa-eye"></i> View
+                                                </button>
                                             </td>
                                         </tr>
                                     <?php
@@ -297,6 +299,31 @@ $top_performers_result = $top_stmt->get_result();
                 </div>
             </div>
 
+        </div>
+    </div>
+
+    <!-- Reviews Modal -->
+    <div class="modal fade" id="reviewsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Performance Reviews - <span id="modalEmployeeName"></span></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="reviewsLoader" class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                    <div id="reviewsContent" class="d-none">
+                        <!-- Reviews will be loaded here -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -349,6 +376,66 @@ $top_performers_result = $top_stmt->get_result();
                     title: { display: false }
                 }
             }
+        });
+
+        // Handle View Reviews Modal
+        document.addEventListener('DOMContentLoaded', function() {
+            const modal = new bootstrap.Modal(document.getElementById('reviewsModal'));
+            const buttons = document.querySelectorAll('.view-reviews-btn');
+            const loader = document.getElementById('reviewsLoader');
+            const content = document.getElementById('reviewsContent');
+            const nameSpan = document.getElementById('modalEmployeeName');
+
+            buttons.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = this.getAttribute('data-id');
+                    const name = this.getAttribute('data-name');
+
+                    nameSpan.textContent = name;
+                    loader.classList.remove('d-none');
+                    content.classList.add('d-none');
+                    modal.show();
+
+                    // Fetch reviews
+                    fetch(`../api/get_employee_reviews.php?id=${id}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            loader.classList.add('d-none');
+                            content.classList.remove('d-none');
+
+                            if (data.reviews && data.reviews.length > 0) {
+                                let html = '<div class="list-group">';
+                                data.reviews.forEach(review => {
+                                    let stars = '';
+                                    for(let i=1; i<=5; i++) {
+                                        stars += i <= review.rating ? '<i class="fas fa-star text-warning"></i>' : '<i class="far fa-star text-muted"></i>';
+                                    }
+
+                                    html += `
+                                        <div class="list-group-item list-group-item-action">
+                                            <div class="d-flex w-100 justify-content-between">
+                                                <h6 class="mb-1">Review by ${review.reviewer}</h6>
+                                                <small class="text-muted">${review.date}</small>
+                                            </div>
+                                            <div class="mb-2">${stars}</div>
+                                            <p class="mb-1">${review.comments}</p>
+                                        </div>
+                                    `;
+                                });
+                                html += '</div>';
+                                content.innerHTML = html;
+                            } else {
+                                content.innerHTML = '<div class="text-center text-muted py-3">No reviews found for this employee.</div>';
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            loader.classList.add('d-none');
+                            content.classList.remove('d-none');
+                            content.innerHTML = '<div class="alert alert-danger">Error loading reviews.</div>';
+                        });
+                });
+            });
         });
     </script>
 </body>
