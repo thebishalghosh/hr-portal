@@ -98,6 +98,9 @@ if (isset($_SESSION['user_role']) && $_SESSION['user_role'] == 'admin') {
                 <a href="http://localhost/exam/login/sso?session_token=<?php echo isset($_SESSION['session_token']) ? htmlspecialchars($_SESSION['session_token']) : ''; ?>" class="nav-link" target="_blank">
                     <i class="fas fa-graduation-cap"></i> Exam Portal
                 </a>
+                <a href="http://localhost/interview-management/" class="nav-link" target="_blank">
+                    <i class="fas fa-user-tie"></i> Interview Portal
+                </a>
             <?php endif; ?>
 
             <div class="dropdown">
