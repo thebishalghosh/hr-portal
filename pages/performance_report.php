@@ -19,30 +19,29 @@ $dept_query = "SELECT DISTINCT department FROM employees WHERE department IS NOT
 $dept_result = $conn->query($dept_query);
 
 // Build the main query
-$query = "SELECT 
-    e.employee_id,
-    e.full_name,
-    e.department,
+// FIX: Select all employee columns to ensure data availability
+$query = "SELECT
+    e.*,
     AVG(pr.rating) as avg_rating,
     COUNT(pr.review_id) as total_reviews,
     MAX(pr.review_date) as last_review_date
 FROM employees e
-LEFT JOIN performance_reviews pr ON e.employee_id = pr.employee_id
+LEFT JOIN performance_reviews pr
+    ON e.employee_id = pr.employee_id
+    AND pr.review_date BETWEEN ? AND ?
 WHERE e.status = 'Active'";
 
-$params = [];
-$types = '';
+$params = [$start_date, $end_date];
+$types = 'ss';
+
 if (!empty($department)) {
     $query .= " AND e.department = ?";
     $params[] = $department;
     $types .= 's';
 }
-$query .= " AND (pr.review_date BETWEEN ? AND ? OR pr.review_date IS NULL)
-GROUP BY e.employee_id, e.full_name, e.department
+
+$query .= " GROUP BY e.employee_id
 ORDER BY avg_rating DESC";
-$params[] = $start_date;
-$params[] = $end_date;
-$types .= 'ss';
 
 $stmt = $conn->prepare($query);
 if (!empty($params)) {
@@ -54,16 +53,21 @@ $result = $stmt->get_result();
 // For charts: get department performance and rating distribution
 $chart_dept_query = "SELECT e.department, AVG(pr.rating) as avg_rating
 FROM employees e
-LEFT JOIN performance_reviews pr ON e.employee_id = pr.employee_id
-WHERE e.status = 'Active' AND (pr.review_date BETWEEN ? AND ? OR pr.review_date IS NULL)";
+LEFT JOIN performance_reviews pr
+    ON e.employee_id = pr.employee_id
+    AND pr.review_date BETWEEN ? AND ?
+WHERE e.status = 'Active'";
+
 $chart_dept_params = [$start_date, $end_date];
 $chart_dept_types = 'ss';
+
 if (!empty($department)) {
     $chart_dept_query .= " AND e.department = ?";
     $chart_dept_params[] = $department;
     $chart_dept_types .= 's';
 }
 $chart_dept_query .= " GROUP BY e.department ORDER BY e.department";
+
 $chart_dept_stmt = $conn->prepare($chart_dept_query);
 $chart_dept_stmt->bind_param($chart_dept_types, ...$chart_dept_params);
 $chart_dept_stmt->execute();
@@ -72,7 +76,8 @@ $dept_labels = [];
 $dept_ratings = [];
 while ($row = $chart_dept_result->fetch_assoc()) {
     $dept_labels[] = $row['department'] ?: 'Unassigned';
-    $dept_ratings[] = round($row['avg_rating'], 2);
+    $avg_rating = $row['avg_rating'];
+    $dept_ratings[] = ($avg_rating !== null) ? round($avg_rating, 2) : 0;
 }
 
 $chart_rating_query = "SELECT rating, COUNT(*) as count FROM performance_reviews WHERE review_date BETWEEN ? AND ? GROUP BY rating ORDER BY rating";
@@ -100,7 +105,7 @@ while ($row = $chart_rating_result->fetch_assoc()) {
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         .main-content {
-            margin-left: 250px;
+            margin-left: 260px; /* Matches sidebar width */
             padding: 2rem;
             min-height: 100vh;
             background-color: #f8f9fa;
@@ -210,20 +215,21 @@ while ($row = $chart_rating_result->fetch_assoc()) {
                             <?php if ($result && $result->num_rows > 0): ?>
                                 <?php while ($row = $result->fetch_assoc()): ?>
                                     <tr>
-                                        <td><?php echo isset($row['full_name']) ? htmlspecialchars($row['full_name']) : '-'; ?></td>
-                                        <td><?php echo isset($row['department']) ? htmlspecialchars($row['department']) : '-'; ?></td>
+                                        <td><?php echo htmlspecialchars($row['full_name'] ?? ''); ?></td>
+                                        <td><?php echo htmlspecialchars($row['department'] ?? ''); ?></td>
                                         <td>
                                             <span class="badge bg-<?php 
-                                                echo (isset($row['avg_rating']) && $row['avg_rating'] >= 4) ? 'success' : 
-                                                    ((isset($row['avg_rating']) && $row['avg_rating'] >= 3) ? 'warning' : 'danger'); 
+                                                $avg = $row['avg_rating'] ?? null;
+                                                echo ($avg !== null && $avg >= 4) ? 'success' :
+                                                    (($avg !== null && $avg >= 3) ? 'warning' : 'danger');
                                             ?> rating-badge">
-                                                <?php echo (isset($row['avg_rating']) && $row['avg_rating'] !== null) ? number_format($row['avg_rating'], 1) : '-'; ?>
+                                                <?php echo ($avg !== null) ? number_format($avg, 1) : '-'; ?>
                                             </span>
                                         </td>
-                                        <td><?php echo isset($row['total_reviews']) ? $row['total_reviews'] : '-'; ?></td>
-                                        <td><?php echo (isset($row['last_review_date']) && $row['last_review_date']) ? date('M d, Y', strtotime($row['last_review_date'])) : 'No reviews'; ?></td>
+                                        <td><?php echo $row['total_reviews'] ?? 0; ?></td>
+                                        <td><?php echo (!empty($row['last_review_date'])) ? date('M d, Y', strtotime($row['last_review_date'])) : 'No reviews'; ?></td>
                                         <td>
-                                            <a href="view_employee.php?id=<?php echo isset($row['employee_id']) ? $row['employee_id'] : 0; ?>" class="btn btn-sm btn-outline-primary">View Details</a>
+                                            <a href="view_employee.php?id=<?php echo $row['employee_id'] ?? 0; ?>" class="btn btn-sm btn-outline-primary">View Details</a>
                                         </td>
                                     </tr>
                                 <?php endwhile; ?>
@@ -291,4 +297,4 @@ while ($row = $chart_rating_result->fetch_assoc()) {
         });
     </script>
 </body>
-</html> 
+</html>

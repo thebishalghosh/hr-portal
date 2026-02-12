@@ -1,6 +1,5 @@
 <?php
 include '../includes/db_connect.php';
-include '../includes/sidebar.php';
 include '../includes/exam_api_config.php'; // Include API configuration
 
 // Check if employee_id is provided
@@ -183,7 +182,7 @@ $absent_stats = $stmt->get_result()->fetch_assoc();
     <link rel="stylesheet" href="/hr-portal/assets/css/sidebar.css">
     <style>
         .main-content {
-            margin-left: 250px;
+            margin-left: 260px; /* Matches sidebar width */
             padding: 20px;
         }
         .profile-header {
@@ -249,9 +248,17 @@ $absent_stats = $stmt->get_result()->fetch_assoc();
         .table th {
             background-color: #f8f9fa;
         }
+        @media (max-width: 992px) {
+            .main-content {
+                margin-left: 0;
+            }
+        }
     </style>
 </head>
 <body>
+    <!-- Include Sidebar Here, AFTER logic and BEFORE content -->
+    <?php include '../includes/sidebar.php'; ?>
+
     <div class="main-content">
         <div class="container-fluid">
             <!-- Profile Header -->
