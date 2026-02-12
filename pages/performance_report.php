@@ -18,38 +18,6 @@ $end_date = isset($_GET['end_date']) ? $_GET['end_date'] : date('Y-m-t');
 $dept_query = "SELECT DISTINCT department FROM employees WHERE department IS NOT NULL AND department != '' ORDER BY department";
 $dept_result = $conn->query($dept_query);
 
-// Build the main query
-// FIX: Select all employee columns to ensure data availability
-$query = "SELECT
-    e.*,
-    AVG(pr.rating) as avg_rating,
-    COUNT(pr.review_id) as total_reviews,
-    MAX(pr.review_date) as last_review_date
-FROM employees e
-LEFT JOIN performance_reviews pr
-    ON e.employee_id = pr.employee_id
-    AND pr.review_date BETWEEN ? AND ?
-WHERE e.status = 'Active'";
-
-$params = [$start_date, $end_date];
-$types = 'ss';
-
-if (!empty($department)) {
-    $query .= " AND e.department = ?";
-    $params[] = $department;
-    $types .= 's';
-}
-
-$query .= " GROUP BY e.employee_id
-ORDER BY avg_rating DESC";
-
-$stmt = $conn->prepare($query);
-if (!empty($params)) {
-    $stmt->bind_param($types, ...$params);
-}
-$stmt->execute();
-$result = $stmt->get_result();
-
 // For charts: get department performance and rating distribution
 $chart_dept_query = "SELECT e.department, AVG(pr.rating) as avg_rating
 FROM employees e
@@ -99,6 +67,7 @@ while ($row = $chart_rating_result->fetch_assoc()) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Performance Report - HR Portal</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='45' fill='%23667eea'/><text x='50' y='68' font-size='50' text-anchor='middle' fill='white' font-family='Arial'>👤</text></svg>">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/hr-portal/assets/css/sidebar.css">
@@ -196,52 +165,6 @@ while ($row = $chart_rating_result->fetch_assoc()) {
                 </div>
             </div>
 
-            <!-- Performance Table -->
-            <div class="info-card">
-                <h5>Employee Performance Details</h5>
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle">
-                        <thead>
-                            <tr>
-                                <th>Employee</th>
-                                <th>Department</th>
-                                <th>Average Rating</th>
-                                <th>Total Reviews</th>
-                                <th>Last Review</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php if ($result && $result->num_rows > 0): ?>
-                                <?php while ($row = $result->fetch_assoc()): ?>
-                                    <tr>
-                                        <td><?php echo htmlspecialchars($row['full_name'] ?? ''); ?></td>
-                                        <td><?php echo htmlspecialchars($row['department'] ?? ''); ?></td>
-                                        <td>
-                                            <span class="badge bg-<?php 
-                                                $avg = $row['avg_rating'] ?? null;
-                                                echo ($avg !== null && $avg >= 4) ? 'success' :
-                                                    (($avg !== null && $avg >= 3) ? 'warning' : 'danger');
-                                            ?> rating-badge">
-                                                <?php echo ($avg !== null) ? number_format($avg, 1) : '-'; ?>
-                                            </span>
-                                        </td>
-                                        <td><?php echo $row['total_reviews'] ?? 0; ?></td>
-                                        <td><?php echo (!empty($row['last_review_date'])) ? date('M d, Y', strtotime($row['last_review_date'])) : 'No reviews'; ?></td>
-                                        <td>
-                                            <a href="view_employee.php?id=<?php echo $row['employee_id'] ?? 0; ?>" class="btn btn-sm btn-outline-primary">View Details</a>
-                                        </td>
-                                    </tr>
-                                <?php endwhile; ?>
-                            <?php else: ?>
-                                <tr>
-                                    <td colspan="6" class="text-center">No data found for the selected filters.</td>
-                                </tr>
-                            <?php endif; ?>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
         </div>
     </div>
 
