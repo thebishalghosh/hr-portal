@@ -79,27 +79,30 @@ $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 $limit = 10;
 $offset = ($page - 1) * $limit;
 
+// Updated Query to fetch Action By name
 if ($isAdmin) {
-    // Count total history
     $countSql = "SELECT COUNT(*) as total FROM leaves WHERE status != 'Pending'";
-    $historySql = "SELECT leaves.leave_id, leaves.employee_id, leaves.leave_type, leaves.start_date, leaves.end_date,
-            leaves.reason, leaves.status,
-            employees.full_name AS employee_name, employees.profile_picture
-            FROM leaves
-            JOIN employees ON leaves.employee_id = employees.employee_id
-            WHERE leaves.status != 'Pending'
-            ORDER BY leaves.start_date DESC
+    $historySql = "SELECT l.leave_id, l.employee_id, l.leave_type, l.start_date, l.end_date,
+            l.reason, l.status,
+            e.full_name AS employee_name, e.profile_picture,
+            admin.full_name AS action_by_name
+            FROM leaves l
+            JOIN employees e ON l.employee_id = e.employee_id
+            LEFT JOIN employees admin ON l.action_by = admin.employee_id
+            WHERE l.status != 'Pending'
+            ORDER BY l.start_date DESC
             LIMIT $limit OFFSET $offset";
 } else {
-    // Count total history
     $countSql = "SELECT COUNT(*) as total FROM leaves WHERE employee_id = $userId AND status != 'Pending'";
-    $historySql = "SELECT leaves.leave_id, leaves.employee_id, leaves.leave_type, leaves.start_date, leaves.end_date,
-            leaves.reason, leaves.status,
-            employees.full_name AS employee_name
-            FROM leaves
-            JOIN employees ON leaves.employee_id = employees.employee_id
-            WHERE leaves.employee_id = $userId AND leaves.status != 'Pending'
-            ORDER BY leaves.start_date DESC
+    $historySql = "SELECT l.leave_id, l.employee_id, l.leave_type, l.start_date, l.end_date,
+            l.reason, l.status,
+            e.full_name AS employee_name,
+            admin.full_name AS action_by_name
+            FROM leaves l
+            JOIN employees e ON l.employee_id = e.employee_id
+            LEFT JOIN employees admin ON l.action_by = admin.employee_id
+            WHERE l.employee_id = $userId AND l.status != 'Pending'
+            ORDER BY l.start_date DESC
             LIMIT $limit OFFSET $offset";
 }
 
@@ -546,6 +549,7 @@ if ($historyResult) {
                                     <th>Duration</th>
                                     <th>Reason</th>
                                     <th>Status</th>
+                                    <th>Action By</th> <!-- New Column -->
                                 </tr>
                             </thead>
                             <tbody>
@@ -561,6 +565,8 @@ if ($historyResult) {
 
                                         $reason = htmlspecialchars($leave['reason']);
                                         $truncatedReason = strlen($reason) > 50 ? substr($reason, 0, 50) . '...' : $reason;
+
+                                        $actionBy = !empty($leave['action_by_name']) ? htmlspecialchars($leave['action_by_name']) : '-';
                                         ?>
                                         <tr>
                                             <?php if ($isAdmin): ?>
@@ -593,11 +599,16 @@ if ($historyResult) {
                                                     <i class="fas <?php echo $statusIcon; ?>"></i> <?php echo $leave['status']; ?>
                                                 </span>
                                             </td>
+                                            <td>
+                                                <span class="text-muted small">
+                                                    <i class="fas fa-user-shield me-1"></i> <?php echo $actionBy; ?>
+                                                </span>
+                                            </td>
                                         </tr>
                                         <?php
                                     }
                                 } else {
-                                    echo '<tr><td colspan="' . ($isAdmin ? 6 : 5) . '" class="text-center py-5 text-muted"><i class="fas fa-history fa-3x mb-3 text-gray-300"></i><br>No leave history found.</td></tr>';
+                                    echo '<tr><td colspan="' . ($isAdmin ? 7 : 6) . '" class="text-center py-5 text-muted"><i class="fas fa-history fa-3x mb-3 text-gray-300"></i><br>No leave history found.</td></tr>';
                                 }
                                 ?>
                             </tbody>

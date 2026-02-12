@@ -195,3 +195,7 @@ CREATE TABLE `company_policies` (
                                             REFERENCES `employees` (`employee_id`)
                                             ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+
+ALTER TABLE `leaves` ADD `action_by` INT NULL AFTER `status`;
+ALTER TABLE `leaves` ADD CONSTRAINT `fk_leaves_action_by` FOREIGN KEY (`action_by`) REFERENCES `employees`(`employee_id`) ON DELETE SET NULL;

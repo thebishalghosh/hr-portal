@@ -1,6 +1,7 @@
 <?php
 include '../includes/db_connect.php';
 include '../includes/auth.php';
+include 'send_mail.php'; // Include the mailer
 
 ?>
 <!DOCTYPE html>
@@ -13,12 +14,9 @@ include '../includes/auth.php';
 </head>
 <body>
 <?php
-// Include the database connection file
-
 
 // Get the logged-in user's employee ID
 $employee_id = $_SESSION['user_id'];
-
 
 // Check if the form is submitted
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
@@ -36,6 +34,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 text: 'All fields are required!',
                 icon: 'error',
                 confirmButtonText: 'OK'
+            }).then(() => {
+                window.history.back();
             });
         </script>";
         exit();
@@ -52,6 +52,51 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         // Execute the statement
         if ($stmt->execute()) {
+
+            // --- EMAIL NOTIFICATION LOGIC START ---
+
+            // 1. Get Employee Name
+            $emp_query = "SELECT full_name FROM employees WHERE employee_id = ?";
+            $emp_stmt = $conn->prepare($emp_query);
+            $emp_stmt->bind_param("i", $employee_id);
+            $emp_stmt->execute();
+            $emp_result = $emp_stmt->get_result();
+            $employee_name = ($emp_result->num_rows > 0) ? $emp_result->fetch_assoc()['full_name'] : 'Employee';
+            $emp_stmt->close();
+
+            // 2. Get All Admin Emails
+            $admin_query = "SELECT email FROM employees WHERE role = 'admin' AND status = 'Active'";
+            $admin_result = $conn->query($admin_query);
+
+            $admin_emails = [];
+            if ($admin_result->num_rows > 0) {
+                while ($row = $admin_result->fetch_assoc()) {
+                    if (!empty($row['email'])) {
+                        $admin_emails[] = $row['email'];
+                    }
+                }
+            }
+
+            // 3. Send Email if admins exist
+            if (!empty($admin_emails)) {
+                $to = $admin_emails[0]; // First admin is main recipient
+                $cc_list = array_slice($admin_emails, 1); // Rest are CC
+
+                $subject = "New Leave Request: $employee_name";
+                $body = "
+                    <h3>New Leave Request</h3>
+                    <p><strong>Employee:</strong> $employee_name</p>
+                    <p><strong>Type:</strong> $leave_type</p>
+                    <p><strong>Dates:</strong> $start_date to $end_date</p>
+                    <p><strong>Reason:</strong><br>" . nl2br(htmlspecialchars($reason)) . "</p>
+                    <br>
+                ";
+
+                // Call the helper function
+                sendMail($to, $subject, $body, $cc_list);
+            }
+            // --- EMAIL NOTIFICATION LOGIC END ---
+
             echo "<script>
                 Swal.fire({
                     title: 'Success!',
@@ -69,6 +114,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     text: 'An error occurred while submitting the leave request.',
                     icon: 'error',
                     confirmButtonText: 'OK'
+                }).then(() => {
+                    window.history.back();
                 });
             </script>";
         }
@@ -82,6 +129,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 text: 'Error preparing the statement.',
                 icon: 'error',
                 confirmButtonText: 'OK'
+            }).then(() => {
+                window.history.back();
             });
         </script>";
     }
