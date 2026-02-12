@@ -147,130 +147,311 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['forgot_password'])) 
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='45' fill='%23667eea'/><text x='50' y='68' font-size='50' text-anchor='middle' fill='white' font-family='Arial'>👤</text></svg>">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --primary-color: #4f46e5;
+            --primary-hover: #4338ca;
+        }
+
         body {
-            background-color: #f8f9fa;
             height: 100vh;
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+        }
+
+        .login-wrapper {
+            display: flex;
+            height: 100%;
+            width: 100%;
+        }
+
+        .login-image {
+            flex: 1;
+            background: url('https://images.unsplash.com/photo-1497215728101-856f4ea42174?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80') no-repeat center center;
+            background-size: cover;
+            position: relative;
+            display: none;
+        }
+
+        .login-image::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(79, 70, 229, 0.8) 0%, rgba(67, 56, 202, 0.8) 100%);
+        }
+
+        .login-image-content {
+            position: relative;
+            z-index: 1;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 4rem;
+            color: white;
+        }
+
+        .login-form-container {
+            flex: 1;
             display: flex;
             align-items: center;
             justify-content: center;
+            background-color: #ffffff;
+            padding: 1.5rem; /* Reduced padding */
+            overflow-y: auto;
         }
-        .login-container {
-            max-width: 400px;
+
+        .login-card {
             width: 100%;
-            padding: 20px;
+            max-width: 380px; /* Reduced max-width */
         }
-        .card {
-            border: none;
-            border-radius: 10px;
-            box-shadow: 0 0 20px rgba(0,0,0,0.1);
-        }
-        .card-header {
-            background-color: #fff;
-            border-bottom: none;
-            text-align: center;
-            padding: 20px;
-        }
+
         .company-logo {
-            max-width: 100px;
-            margin-bottom: 20px;
+            max-width: 100px; /* Reduced logo size */
+            width: 100%;
+            height: auto;
+            margin-bottom: 1.5rem; /* Reduced margin */
         }
+
+        h2 {
+            font-weight: 700;
+            color: #111827;
+            margin-bottom: 0.25rem; /* Reduced margin */
+            font-size: 1.75rem; /* Adjusted font size */
+        }
+
+        .text-muted {
+            color: #6b7280 !important;
+            font-size: 0.9rem; /* Smaller text */
+        }
+
+        .form-label {
+            font-weight: 500;
+            color: #374151;
+            font-size: 0.875rem; /* Smaller label */
+            margin-bottom: 0.35rem;
+        }
+
         .form-control {
-            border-radius: 5px;
-            padding: 12px;
+            border-radius: 0.5rem;
+            padding: 0.6rem 0.875rem; /* Reduced padding */
+            border: 1px solid #d1d5db;
+            font-size: 0.9rem;
+            transition: all 0.2s;
         }
+
+        .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+        }
+
+        .input-group-text {
+            background-color: #f9fafb;
+            border: 1px solid #d1d5db;
+            border-right: none;
+            color: #9ca3af;
+            padding: 0.6rem 0.875rem; /* Match input padding */
+        }
+
+        .input-group .form-control {
+            border-left: none;
+        }
+
         .btn-primary {
-            padding: 12px;
-            border-radius: 5px;
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            padding: 0.6rem; /* Reduced padding */
+            border-radius: 0.5rem;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+            width: 100%;
         }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+            border-color: var(--primary-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
         .forgot-password-link {
-            color: #6c757d;
+            color: var(--primary-color);
             text-decoration: none;
-            font-size: 0.9em;
+            font-size: 0.85rem;
+            font-weight: 500;
         }
+
         .forgot-password-link:hover {
-            color: #495057;
+            color: var(--primary-hover);
             text-decoration: underline;
         }
+
         .back-to-login {
-            color: #007bff;
-            cursor: pointer;
+            color: #6b7280;
             text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: color 0.2s;
         }
+
         .back-to-login:hover {
-            text-decoration: underline;
+            color: #111827;
+        }
+
+        .alert {
+            border-radius: 0.5rem;
+            font-size: 0.85rem;
+            border: none;
+            margin-bottom: 1rem;
+            padding: 0.75rem 1rem;
+        }
+
+        .alert-danger {
+            background-color: #fef2f2;
+            color: #991b1b;
+            border-left: 4px solid #ef4444;
+        }
+
+        .alert-success {
+            background-color: #ecfdf5;
+            color: #065f46;
+            border-left: 4px solid #10b981;
+        }
+
+        #togglePassword {
+            cursor: pointer;
+            background-color: #fff;
+            border-left: none;
+        }
+
+        #togglePassword:hover {
+            color: var(--primary-color);
+        }
+
+        .mb-4 {
+            margin-bottom: 1rem !important; /* Reduced spacing */
+        }
+
+        .mb-3 {
+            margin-bottom: 0.75rem !important; /* Reduced spacing */
+        }
+
+        /* Desktop Styles */
+        @media (min-width: 992px) {
+            .login-image {
+                display: block;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="login-container">
-        <div class="card">
-            <div class="card-header">
-                <img src="https://travarsa.com/wp-content/uploads/2023/03/Travarsa-Logo.png" alt="Company Logo" class="company-logo">
-                <h4 id="form-title">HR Portal Login</h4>
+    <div class="login-wrapper">
+        <!-- Left Side: Image -->
+        <div class="login-image">
+            <div class="login-image-content">
+                <h1 class="display-4 fw-bold mb-4">Welcome to<br>Travarsa HR Portal</h1>
+                <p class="lead mb-0">Manage your workspace efficiently. Access attendance, tasks, and more in one place.</p>
             </div>
-            <div class="card-body">
-                <?php if ($error): ?>
-                    <div class="alert alert-danger"><?php echo $error; ?></div>
-                <?php endif; ?>
-                
-                <?php if ($success): ?>
-                    <div class="alert alert-success"><?php echo $success; ?></div>
-                <?php endif; ?>
-                
-                <!-- Login Form -->
-                <form method="POST" action="" id="login-form">
-                    <div class="mb-3">
-                        <label for="email" class="form-label">Email address</label>
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="fas fa-envelope"></i></span>
-                            <input type="email" class="form-control" id="email" name="email" required
-                                    value="<?php echo isset($_POST['email']) ? htmlspecialchars($_POST['email']) : ''; ?>">
-                        </div>
+        </div>
+
+        <!-- Right Side: Form -->
+        <div class="login-form-container">
+            <div class="login-card">
+                <div class="text-center">
+                    <img src="https://travarsa.com/wp-content/uploads/2023/03/Travarsa-Logo.png" alt="Company Logo" class="company-logo">
+                </div>
+
+                <div id="login-section">
+                    <div class="mb-4 text-center">
+                        <h2>Sign In</h2>
+                        <p class="text-muted">Enter your credentials to access your account</p>
                     </div>
-                    <div class="mb-3">
-                        <label for="password" class="form-label">Password</label>
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="fas fa-lock"></i></span>
-                            <input type="password" class="form-control" id="password" name="password" required>
-                            <span class="input-group-text" id="togglePassword" style="cursor: pointer;">
-                                <i class="fas fa-eye" aria-hidden="true"></i>
-                            </span>
+
+                    <?php if ($error): ?>
+                        <div class="alert alert-danger d-flex align-items-center" role="alert">
+                            <i class="fas fa-exclamation-circle me-2"></i>
+                            <div><?php echo $error; ?></div>
                         </div>
-                    </div>
-                    <div class="d-grid">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-sign-in-alt me-2"></i>Login
+                    <?php endif; ?>
+
+                    <?php if ($success): ?>
+                        <div class="alert alert-success d-flex align-items-center" role="alert">
+                            <i class="fas fa-check-circle me-2"></i>
+                            <div><?php echo $success; ?></div>
+                        </div>
+                    <?php endif; ?>
+
+                    <form method="POST" action="">
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email Address</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                                <input type="email" class="form-control" id="email" name="email" required
+                                        placeholder="name@company.com"
+                                        value="<?php echo isset($_POST['email']) ? htmlspecialchars($_POST['email']) : ''; ?>">
+                            </div>
+                        </div>
+
+                        <div class="mb-2">
+                            <label for="password" class="form-label">Password</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                <input type="password" class="form-control" id="password" name="password" required placeholder="Enter your password">
+                                <span class="input-group-text" id="togglePassword">
+                                    <i class="fas fa-eye" aria-hidden="true"></i>
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-end mb-4">
+                            <a href="#" class="forgot-password-link" onclick="showForgotPassword()">Forgot Password?</a>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary mb-4">
+                            Sign In
                         </button>
+                    </form>
+                </div>
+
+                <!-- Forgot Password Section -->
+                <div id="forgot-section" style="display: none;">
+                    <div class="mb-4 text-center">
+                        <h2>Reset Password</h2>
+                        <p class="text-muted">Enter your email to receive reset instructions</p>
                     </div>
-                    <div class="text-center mt-3">
-                        <a href="#" class="forgot-password-link" onclick="showForgotPassword()">
-                            <i class="fas fa-key me-1"></i>Forgot Password?
-                        </a>
-                    </div>
-                </form>
-                
-                <!-- Forgot Password Form -->
-                <form method="POST" action="" id="forgot-form" style="display: none;">
-                    <div class="mb-3">
-                        <label for="forgot_email" class="form-label">Email address</label>
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="fas fa-envelope"></i></span>
-                            <input type="email" class="form-control" id="forgot_email" name="forgot_email" required>
+
+                    <form method="POST" action="">
+                        <div class="mb-4">
+                            <label for="forgot_email" class="form-label">Email Address</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                                <input type="email" class="form-control" id="forgot_email" name="forgot_email" required placeholder="name@company.com">
+                            </div>
                         </div>
-                        <div class="form-text">Enter your email address to receive a password reset link.</div>
-                    </div>
-                    <div class="d-grid">
-                        <button type="submit" name="forgot_password" class="btn btn-primary">
-                            <i class="fas fa-paper-plane me-2"></i>Send Reset Link
+
+                        <button type="submit" name="forgot_password" class="btn btn-primary mb-4">
+                            Send Reset Link
                         </button>
-                    </div>
-                    <div class="text-center mt-3">
-                        <a href="#" class="back-to-login" onclick="showLogin()">
-                            <i class="fas fa-arrow-left me-1"></i>Back to Login
-                        </a>
-                    </div>
-                </form>
+
+                        <div class="text-center">
+                            <a href="#" class="back-to-login" onclick="showLogin()">
+                                <i class="fas fa-arrow-left"></i> Back to Login
+                            </a>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="text-center mt-3">
+                    <p class="text-muted small mb-0">&copy; <?php echo date('Y'); ?> Travarsa. All rights reserved.</p>
+                </div>
             </div>
         </div>
     </div>
@@ -278,15 +459,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['forgot_password'])) 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         function showForgotPassword() {
-            document.getElementById('login-form').style.display = 'none';
-            document.getElementById('forgot-form').style.display = 'block';
-            document.getElementById('form-title').textContent = 'Reset Password';
+            document.getElementById('login-section').style.display = 'none';
+            document.getElementById('forgot-section').style.display = 'block';
         }
         
         function showLogin() {
-            document.getElementById('forgot-form').style.display = 'none';
-            document.getElementById('login-form').style.display = 'block';
-            document.getElementById('form-title').textContent = 'HR Portal Login';
+            document.getElementById('forgot-section').style.display = 'none';
+            document.getElementById('login-section').style.display = 'block';
         }
 
         const togglePassword = document.querySelector('#togglePassword');
@@ -294,11 +473,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['forgot_password'])) 
         const toggleIcon = togglePassword.querySelector('i');
 
         togglePassword.addEventListener('click', function () {
-            // toggle the type attribute
             const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
             password.setAttribute('type', type);
-
-            // toggle the icon
             toggleIcon.classList.toggle('fa-eye');
             toggleIcon.classList.toggle('fa-eye-slash');
         });
