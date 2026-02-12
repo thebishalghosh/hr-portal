@@ -13,6 +13,18 @@ if (isset($_SESSION['user_role']) && $_SESSION['user_role'] == 'admin') {
         $pending_leaves_count = $row['count'];
     }
 }
+
+// Determine Environment and Set Portal URLs
+$host = $_SERVER['HTTP_HOST'];
+$is_local = ($host === 'localhost' || $host === '127.0.0.1');
+
+$exam_portal_url = $is_local
+    ? 'http://localhost/exam/login/sso'
+    : 'https://exam.travarsa.net/login/sso';
+
+$interview_portal_url = $is_local
+    ? 'http://localhost/interview-management/'
+    : 'https://interview.travarsa.net';
 ?>
 
 <!-- Add favicon -->
@@ -74,6 +86,20 @@ if (isset($_SESSION['user_role']) && $_SESSION['user_role'] == 'admin') {
                 echo '<a class="nav-link" href="/hr-portal/pages/my_tasks.php"><i class="fas fa-tasks"></i>My Tasks</a>';
             }
             ?>
+
+            <!-- Policies Dropdown -->
+            <div class="dropdown">
+                <a class="nav-link dropdown-toggle" href="#" id="policiesDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="fas fa-book-open"></i> Policies
+                </a>
+                <ul class="dropdown-menu" aria-labelledby="policiesDropdown">
+                    <li><a class="dropdown-item" href="/hr-portal/pages/policies.php">Company Policies</a></li>
+                    <?php if ($_SESSION['user_role'] == 'admin'): ?>
+                        <li><a class="dropdown-item" href="/hr-portal/pages/manage_policies.php">Manage Policies</a></li>
+                    <?php endif; ?>
+                </ul>
+            </div>
+
             <?php
             if ($_SESSION['user_role'] == 'admin') {
                 echo '<a href="/hr-portal/pages/performance_review.php" class="nav-link">
@@ -95,10 +121,10 @@ if (isset($_SESSION['user_role']) && $_SESSION['user_role'] == 'admin') {
             <?php endif; ?>
 
             <?php if ($_SESSION['user_role'] == 'admin'): ?>
-                <a href="http://localhost/exam/login/sso?session_token=<?php echo isset($_SESSION['session_token']) ? htmlspecialchars($_SESSION['session_token']) : ''; ?>" class="nav-link" target="_blank">
+                <a href="<?php echo $exam_portal_url; ?>?session_token=<?php echo isset($_SESSION['session_token']) ? htmlspecialchars($_SESSION['session_token']) : ''; ?>" class="nav-link" target="_blank">
                     <i class="fas fa-graduation-cap"></i> Exam Portal
                 </a>
-                <a href="http://localhost/interview-management/" class="nav-link" target="_blank">
+                <a href="<?php echo $interview_portal_url; ?>" class="nav-link" target="_blank">
                     <i class="fas fa-user-tie"></i> Interview Portal
                 </a>
             <?php endif; ?>

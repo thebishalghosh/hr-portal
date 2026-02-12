@@ -174,3 +174,24 @@ CREATE TABLE `user_sessions` (
   CONSTRAINT `user_sessions_ibfk_1` FOREIGN KEY (`employee_id`) REFERENCES `employees` (`employee_id`) ON DELETE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=2579 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
+CREATE TABLE `company_policies` (
+                                    `policy_id` int NOT NULL AUTO_INCREMENT,
+                                    `title` varchar(255) NOT NULL,
+                                    `category` varchar(100) NOT NULL,
+                                    `description` text,
+                                    `file_path` varchar(255) DEFAULT NULL,
+                                    `version` varchar(50) DEFAULT '1.0',
+                                    `is_active` tinyint(1) NOT NULL DEFAULT '1',
+                                    `created_by` int DEFAULT NULL,
+                                    `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                                    `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                                    PRIMARY KEY (`policy_id`),
+                                    KEY `created_by` (`created_by`),
+                                    KEY `is_active` (`is_active`),
+                                    KEY `category` (`category`),
+                                    KEY `idx_active_updated` (`is_active`,`updated_at`),
+                                    CONSTRAINT `company_policies_ibfk_1`
+                                        FOREIGN KEY (`created_by`)
+                                            REFERENCES `employees` (`employee_id`)
+                                            ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
