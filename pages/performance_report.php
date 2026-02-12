@@ -59,6 +59,37 @@ while ($row = $chart_rating_result->fetch_assoc()) {
     $rating_labels[] = $row['rating'];
     $rating_counts[] = $row['count'];
 }
+
+// Top 5 Performers Query
+$top_performers_query = "SELECT
+    e.employee_id,
+    e.full_name,
+    e.department,
+    e.profile_picture,
+    AVG(pr.rating) as avg_rating,
+    COUNT(pr.review_id) as total_reviews
+FROM employees e
+JOIN performance_reviews pr ON e.employee_id = pr.employee_id
+WHERE e.status = 'Active'
+  AND pr.review_date BETWEEN ? AND ?";
+
+$top_params = [$start_date, $end_date];
+$top_types = 'ss';
+
+if (!empty($department)) {
+    $top_performers_query .= " AND e.department = ?";
+    $top_params[] = $department;
+    $top_types .= 's';
+}
+
+$top_performers_query .= " GROUP BY e.employee_id
+ORDER BY avg_rating DESC, total_reviews DESC
+LIMIT 5";
+
+$top_stmt = $conn->prepare($top_performers_query);
+$top_stmt->bind_param($top_types, ...$top_params);
+$top_stmt->execute();
+$top_performers_result = $top_stmt->get_result();
 ?>
 
 <!DOCTYPE html>
@@ -92,8 +123,17 @@ while ($row = $chart_rating_result->fetch_assoc()) {
             margin-bottom: 20px;
         }
         .rating-badge {
-            font-size: 1rem;
-            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+        }
+        .performer-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-right: 10px;
+            border: 2px solid #e9ecef;
         }
         @media (max-width: 991.98px) {
             .main-content {
@@ -160,6 +200,98 @@ while ($row = $chart_rating_result->fetch_assoc()) {
                         <h5>Rating Distribution</h5>
                         <div class="chart-container">
                             <canvas id="ratingChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Top 5 Performers -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="info-card">
+                        <h5 class="mb-4"><i class="fas fa-trophy text-warning me-2"></i>Top 5 Performers</h5>
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Rank</th>
+                                        <th>Employee</th>
+                                        <th>Department</th>
+                                        <th>Reviews</th>
+                                        <th>Average Rating</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php
+                                    if ($top_performers_result && $top_performers_result->num_rows > 0):
+                                        $rank = 1;
+                                        while ($performer = $top_performers_result->fetch_assoc()):
+                                            $avatar = !empty($performer['profile_picture']) ? $performer['profile_picture'] : '../assets/images/default-avatar.png';
+                                            // Fix path if it starts with ./ or ../
+                                            if (strpos($avatar, './') === 0) {
+                                                $avatar = str_replace('./', '/', $avatar);
+                                                $avatar = '/hr-portal' . $avatar;
+                                            } elseif (strpos($avatar, '../') === 0) {
+                                                $avatar = str_replace('../', '/', $avatar);
+                                                $avatar = '/hr-portal' . $avatar;
+                                            }
+                                    ?>
+                                        <tr>
+                                            <td>
+                                                <?php if ($rank == 1): ?>
+                                                    <i class="fas fa-medal text-warning fa-lg"></i>
+                                                <?php elseif ($rank == 2): ?>
+                                                    <i class="fas fa-medal text-secondary fa-lg"></i>
+                                                <?php elseif ($rank == 3): ?>
+                                                    <i class="fas fa-medal text-danger fa-lg" style="color: #cd7f32 !important;"></i>
+                                                <?php else: ?>
+                                                    <span class="fw-bold text-muted ms-1">#<?php echo $rank; ?></span>
+                                                <?php endif; ?>
+                                            </td>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <img src="<?php echo htmlspecialchars($avatar); ?>" alt="Avatar" class="performer-avatar">
+                                                    <span class="fw-bold"><?php echo htmlspecialchars($performer['full_name']); ?></span>
+                                                </div>
+                                            </td>
+                                            <td><span class="badge bg-light text-dark border"><?php echo htmlspecialchars($performer['department']); ?></span></td>
+                                            <td><?php echo $performer['total_reviews']; ?></td>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <span class="rating-badge bg-success text-white me-2">
+                                                        <?php echo number_format($performer['avg_rating'], 1); ?>
+                                                    </span>
+                                                    <div class="text-warning small">
+                                                        <?php
+                                                        $stars = round($performer['avg_rating']);
+                                                        for($i=1; $i<=5; $i++) {
+                                                            echo $i <= $stars ? '<i class="fas fa-star"></i>' : '<i class="far fa-star text-muted"></i>';
+                                                        }
+                                                        ?>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <a href="view_employee.php?id=<?php echo $performer['employee_id']; ?>" class="btn btn-sm btn-outline-primary">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    <?php
+                                        $rank++;
+                                        endwhile;
+                                    else:
+                                    ?>
+                                        <tr>
+                                            <td colspan="6" class="text-center py-4 text-muted">
+                                                <i class="fas fa-chart-bar fa-2x mb-3 opacity-50"></i>
+                                                <p class="mb-0">No performance data available for this period.</p>
+                                            </td>
+                                        </tr>
+                                    <?php endif; ?>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
