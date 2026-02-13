@@ -53,15 +53,22 @@ if (isset($_GET['leave_id'])) {
             if ($leave_data && !empty($leave_data['email'])) {
                 $to = $leave_data['email'];
                 $subject = "Leave Rejected: " . $leave_data['leave_type'];
-                $body = "
-                    <h3>Leave Request Update</h3>
+
+                $content = "
                     <p>Dear " . htmlspecialchars($leave_data['full_name']) . ",</p>
-                    <p>Your request for <strong>" . htmlspecialchars($leave_data['leave_type']) . "</strong> has been <span style='color:red; font-weight:bold;'>REJECTED</span>.</p>
-                    <p><strong>Dates:</strong> " . $leave_data['start_date'] . " to " . $leave_data['end_date'] . "</p>
-                    <p><strong>Rejected By:</strong> " . htmlspecialchars($admin_name) . "</p>
-                    <br>
-                    <p>Please contact HR for more details.</p>
+                    <p>We regret to inform you that your leave request has been <strong>REJECTED</strong>.</p>
+                    <table class='info-table'>
+                        <tr><td>Leave Type:</td><td>" . htmlspecialchars($leave_data['leave_type']) . "</td></tr>
+                        <tr><td>Start Date:</td><td>" . $leave_data['start_date'] . "</td></tr>
+                        <tr><td>End Date:</td><td>" . $leave_data['end_date'] . "</td></tr>
+                        <tr><td>Rejected By:</td><td>" . htmlspecialchars($admin_name) . "</td></tr>
+                    </table>
+                    <p>Please contact HR for more details regarding this decision.</p>
+                    <p>Thank you for your understanding.</p>
                 ";
+
+                $body = get_email_template("Leave Request Rejected", $content, "#dc2626"); // Red
+
                 sendMail($to, $subject, $body);
             }
 

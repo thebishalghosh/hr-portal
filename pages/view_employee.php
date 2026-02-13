@@ -1,4 +1,7 @@
 <?php
+error_reporting(E_ALL);
+ini_set('display_errors', '1');
+
 include '../includes/db_connect.php';
 include '../includes/exam_api_config.php'; // Include API configuration
 

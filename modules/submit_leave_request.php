@@ -83,14 +83,22 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $cc_list = array_slice($admin_emails, 1); // Rest are CC
 
                 $subject = "New Leave Request: $employee_name";
-                $body = "
-                    <h3>New Leave Request</h3>
-                    <p><strong>Employee:</strong> $employee_name</p>
-                    <p><strong>Type:</strong> $leave_type</p>
-                    <p><strong>Dates:</strong> $start_date to $end_date</p>
-                    <p><strong>Reason:</strong><br>" . nl2br(htmlspecialchars($reason)) . "</p>
-                    <br>
+
+                $content = "
+                    <p>A new leave request has been submitted and requires your attention.</p>
+                    <table class='info-table'>
+                        <tr><td>Employee:</td><td>$employee_name</td></tr>
+                        <tr><td>Leave Type:</td><td>$leave_type</td></tr>
+                        <tr><td>Start Date:</td><td>$start_date</td></tr>
+                        <tr><td>End Date:</td><td>$end_date</td></tr>
+                        <tr><td>Reason:</td><td>" . nl2br(htmlspecialchars($reason)) . "</td></tr>
+                    </table>
+                    <div style='text-align: center;'>
+                        <a href='http://localhost/hr-portal/pages/view_leave.php' class='btn'>Review Request</a>
+                    </div>
                 ";
+
+                $body = get_email_template("New Leave Request", $content, "#2563eb"); // Blue
 
                 // Call the helper function
                 sendMail($to, $subject, $body, $cc_list);
