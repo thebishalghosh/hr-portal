@@ -63,4 +63,3 @@ $result = $conn->query("SELECT * FROM information_schema.TABLE_CONSTRAINTS WHERE
 if ($result->num_rows === 0) {
     $conn->query("ALTER TABLE user_sessions ADD FOREIGN KEY (employee_id) REFERENCES employees(employee_id) ON DELETE CASCADE");
 }
-?>
