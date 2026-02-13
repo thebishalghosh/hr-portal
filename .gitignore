@@ -1,5 +1,5 @@
 /uploads/
-/db_connect.php
+includes/db_connect.php
 .env
 *.log
 
