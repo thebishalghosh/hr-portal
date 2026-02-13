@@ -3,7 +3,7 @@
 .env
 *.log
 
-
+modules/send_mail.php
 # Configuration
 includes/mail_config.php
 includes/exam_api_config.php
