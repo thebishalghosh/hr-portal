@@ -1,12 +1,10 @@
 <?php
-error_reporting(E_ALL);
-ini_set('display_errors', '1');
-include '../includes/db_connect.php';
-include '../includes/exam_api_config.php'; // Include API configuration
+// 1. Auth first (starts session, includes db_connect)
+include '../includes/auth.php';
 
-// Check if employee_id is provided
+// 2. Validation & Redirects (Must happen before any other includes that might output)
 if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
-    header('Location: employees.php');
+    header('Location: candidate.php'); // Redirect to candidate list, not employees.php (which doesn't exist)
     exit();
 }
 
@@ -20,17 +18,18 @@ $stmt->execute();
 $employee = $stmt->get_result()->fetch_assoc();
 
 if (!$employee) {
-    header('Location: employees.php');
+    header('Location: candidate.php');
     exit();
 }
+
+// 3. Now safe to include other files
+include '../includes/exam_api_config.php';
 
 // --- API Call to Fetch Exams for this Employee ---
 $assigned_exams = [];
 $candidate_email = isset($employee['email']) ? $employee['email'] : '';
 
 if (!empty($candidate_email)) {
-    // We don't need the session token here as we are just viewing the employee's profile as an admin/manager
-    // The API should allow fetching exams by email with the API key
     $request_url = $exam_api_url . '?email=' . urlencode($candidate_email);
 
     $ch = curl_init();
