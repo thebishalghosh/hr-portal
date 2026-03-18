@@ -81,9 +81,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                                 <tr><td style='padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold;'>Subject:</td><td style='padding: 8px; border-bottom: 1px solid #ddd;'>$ticket_subject</td></tr>
                                 <tr><td style='padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold; vertical-align: top;'>Notes:</td><td style='padding: 8px; border-bottom: 1px solid #ddd;'>" . nl2br(htmlspecialchars($admin_notes)) . "</td></tr>
                             </table>
-                            <div style='text-align: center; margin-top: 30px;'>
-                                <a href='http://localhost/hr-portal/pages/manage_tickets.php' style='background-color: #f59e0b; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;'>View Ticket</a>
-                            </div>
+                            <p style='margin-top: 20px; font-style: italic; color: #555;'>Please log in to the HR Portal to review and manage this ticket.</p>
                         ";
 
                         if (function_exists('get_email_template')) {
