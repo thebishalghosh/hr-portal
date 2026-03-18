@@ -167,7 +167,7 @@ $leaves_result = $stmt->get_result();
             margin-bottom: 2rem;
             box-shadow: var(--card-shadow);
             position: relative;
-            overflow: hidden;
+            overflow: visible; /* Changed from hidden to visible */
         }
 
         .welcome-banner::after {
@@ -180,6 +180,7 @@ $leaves_result = $stmt->get_result();
             background: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMTAwIDBMMjAwIDIwMEgwWjIiIGZpbGw9IndoaXRlIiBmaWxsLW9wYWNpdHk9IjAuMDUiLz48L3N2Zz4=') no-repeat right center;
             background-size: cover;
             opacity: 0.5;
+            pointer-events: none; /* Add this so it doesn't block clicks */
         }
 
         .welcome-title {
@@ -364,8 +365,10 @@ $leaves_result = $stmt->get_result();
                     <h1 class="welcome-title">Welcome back, <?php echo htmlspecialchars($user['full_name']); ?>! 👋</h1>
                     <p class="welcome-date"><i class="far fa-calendar-alt me-2"></i><?php echo date('l, F j, Y'); ?></p>
                 </div>
-                <div class="col-md-4 text-md-end d-none d-md-block">
-                    <!-- Optional: Add a small illustration or action button here -->
+                <div class="col-md-4 text-md-end" style="position: relative; z-index: 10;">
+                    <a href="pages/profile.php" class="btn btn-light text-primary fw-bold px-4 py-2" style="border-radius: 8px;">
+                        <i class="fas fa-user-circle me-2"></i> View Profile
+                    </a>
                 </div>
             </div>
         </div>

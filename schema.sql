@@ -199,3 +199,24 @@ CREATE TABLE `company_policies` (
 
 ALTER TABLE `leaves` ADD `action_by` INT NULL AFTER `status`;
 ALTER TABLE `leaves` ADD CONSTRAINT `fk_leaves_action_by` FOREIGN KEY (`action_by`) REFERENCES `employees`(`employee_id`) ON DELETE SET NULL;
+
+
+
+CREATE TABLE `support_tickets` (
+                                   `ticket_id` INT NOT NULL AUTO_INCREMENT,
+                                   `ticket_code` VARCHAR(50) NOT NULL UNIQUE COMMENT 'e.g., TKT-1001',
+                                   `employee_id` INT NOT NULL,
+                                   `issue_type` ENUM('Training Server', 'Internet', 'Cables', 'Facilities', 'Furniture', 'Password Reset', 'Other') NOT NULL,
+                                   `subject` VARCHAR(255) NOT NULL,
+                                   `description` TEXT NOT NULL,
+                                   `priority` ENUM('Low', 'Medium', 'High', 'Critical') NOT NULL,
+                                   `status` ENUM('Open', 'In Progress', 'On Hold', 'Resolved', 'Rejected') NOT NULL DEFAULT 'Open',
+                                   `attachment` VARCHAR(255) DEFAULT NULL COMMENT 'Path to uploaded file',
+                                   `assigned_to` INT DEFAULT NULL COMMENT 'Admin/Manager handling the ticket',
+                                   `admin_notes` TEXT DEFAULT NULL,
+                                   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                                   `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                                   PRIMARY KEY (`ticket_id`),
+                                   FOREIGN KEY (`employee_id`) REFERENCES `employees`(`employee_id`) ON DELETE CASCADE,
+                                   FOREIGN KEY (`assigned_to`) REFERENCES `employees`(`employee_id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

@@ -14,6 +14,17 @@ if (isset($_SESSION['user_role']) && $_SESSION['user_role'] == 'admin') {
     }
 }
 
+// Count open tickets for admin badge
+$open_tickets_count = 0;
+if (isset($_SESSION['user_role']) && $_SESSION['user_role'] == 'admin') {
+    $ticket_query = "SELECT COUNT(*) as count FROM support_tickets WHERE status = 'Open'";
+    $ticket_result = $conn->query($ticket_query);
+    if ($ticket_result) {
+        $row = $ticket_result->fetch_assoc();
+        $open_tickets_count = $row['count'];
+    }
+}
+
 // Determine Environment and Set Portal URLs
 $host = $_SERVER['HTTP_HOST'];
 $is_local = ($host === 'localhost' || $host === '127.0.0.1');
@@ -48,9 +59,6 @@ $interview_portal_url = $is_local
         <div class="nav flex-column">
             <a href="/hr-portal/dashboard.php" class="nav-link">
                 <i class="fas fa-tachometer-alt"></i> Dashboard
-            </a>
-            <a href="/hr-portal/pages/profile.php" class="nav-link">
-                <i class="fas fa-user-circle"></i> Profile
             </a>
             <?php
             if ($_SESSION['user_role'] == 'admin') {
@@ -150,6 +158,31 @@ $interview_portal_url = $is_local
                     </li>
                 </ul>
             </div>
+
+            <!-- Support/Helpdesk Dropdown -->
+            <div class="dropdown">
+                <a class="nav-link dropdown-toggle d-flex align-items-center justify-content-between" href="#" id="supportDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    <span><i class="fas fa-life-ring"></i> IT Support</span>
+                    <?php if (isset($_SESSION['user_role']) && $_SESSION['user_role'] == 'admin' && $open_tickets_count > 0): ?>
+                        <span class="badge bg-warning text-dark rounded-pill" style="font-size: 0.7rem;"><?php echo $open_tickets_count; ?></span>
+                    <?php endif; ?>
+                </a>
+                <ul class="dropdown-menu" aria-labelledby="supportDropdown">
+                    <li><a class="dropdown-item" href="/hr-portal/pages/create_ticket.php">Raise a Ticket</a></li>
+                    <li><a class="dropdown-item" href="/hr-portal/pages/my_tickets.php">My Tickets</a></li>
+                    <?php if ($_SESSION['user_role'] == 'admin'): ?>
+                        <li>
+                            <a class="dropdown-item d-flex justify-content-between align-items-center" href="/hr-portal/pages/manage_tickets.php">
+                                Manage Tickets
+                                <?php if ($open_tickets_count > 0): ?>
+                                    <span class="badge bg-warning text-dark rounded-pill" style="font-size: 0.6rem;"><?php echo $open_tickets_count; ?></span>
+                                <?php endif; ?>
+                            </a>
+                        </li>
+                    <?php endif; ?>
+                </ul>
+            </div>
+
             <!-- Logout Button -->
             <div class="logout-btn">
                 <a href="/hr-portal/logout.php">
