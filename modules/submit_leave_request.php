@@ -93,9 +93,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         <tr><td>End Date:</td><td>$end_date</td></tr>
                         <tr><td>Reason:</td><td>" . nl2br(htmlspecialchars($reason)) . "</td></tr>
                     </table>
-                    <div style='text-align: center;'>
-                        <a href='http://localhost/hr-portal/pages/view_leave.php' class='btn'>Review Request</a>
-                    </div>
+
                 ";
 
                 $body = get_email_template("New Leave Request", $content, "#2563eb"); // Blue
