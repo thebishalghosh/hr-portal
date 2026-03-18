@@ -80,10 +80,12 @@ $interview_portal_url = $is_local
                             <li><a class="dropdown-item" href="/hr-portal/pages/assign_task.php">Assign Task</a></li>
                             <li><a class="dropdown-item" href="/hr-portal/pages/view_tasks.php">View All Tasks</a></li>
                             <li><a class="dropdown-item" href="/hr-portal/pages/my_tasks.php">My Tasks</a></li>
+                            <li><a class="dropdown-item" href="/hr-portal/pages/my_exams.php">My Exams</a></li>
                             </ul>
                         </div>';
             } else {
                 echo '<a class="nav-link" href="/hr-portal/pages/my_tasks.php"><i class="fas fa-tasks"></i>My Tasks</a>';
+                echo '<a class="nav-link" href="/hr-portal/pages/my_exams.php"><i class="fas fa-graduation-cap"></i>My Exams</a>';
             }
             ?>
 
