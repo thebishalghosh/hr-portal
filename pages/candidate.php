@@ -16,7 +16,8 @@ include '../includes/sidebar.php';
 // Get filter parameters
 $search = isset($_GET['search']) ? $_GET['search'] : '';
 $department = isset($_GET['department']) ? $_GET['department'] : '';
-$status = isset($_GET['status']) ? $_GET['status'] : '';
+// Default to Active if status is not set in URL, else use the provided status (which could be empty for 'All')
+$status = isset($_GET['status']) ? $_GET['status'] : 'Active';
 $role = isset($_GET['role']) ? $_GET['role'] : '';
 
 // Fetch all departments for the filter dropdown
