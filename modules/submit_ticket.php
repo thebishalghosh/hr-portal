@@ -133,9 +133,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         <tr><td style='padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold;'>Subject:</td><td style='padding: 8px; border-bottom: 1px solid #ddd;'>$subject</td></tr>
                         <tr><td style='padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold; vertical-align: top;'>Description:</td><td style='padding: 8px; border-bottom: 1px solid #ddd;'>" . nl2br(htmlspecialchars($description)) . "</td></tr>
                     </table>
-                    <div style='text-align: center; margin-top: 30px;'>
-                        <a href='http://localhost/hr-portal/pages/manage_tickets.php' style='background-color: #4f46e5; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;'>Review Ticket</a>
-                    </div>
                 ";
 
                 // Using the exact same template function as leave management

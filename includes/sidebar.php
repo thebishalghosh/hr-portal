@@ -169,7 +169,7 @@ $interview_portal_url = $is_local
                 </a>
                 <ul class="dropdown-menu" aria-labelledby="supportDropdown">
                     <li><a class="dropdown-item" href="/hr-portal/pages/create_ticket.php">Raise a Ticket</a></li>
-                    <li><a class="dropdown-item" href="/hr-portal/pages/my_tickets.php">My Tickets</a></li>
+                    <li><a class="dropdown-item" href="/hr-portal/pages/my_tickets.php">Active Tickets</a></li>
                     <?php if ($_SESSION['user_role'] == 'admin'): ?>
                         <li>
                             <a class="dropdown-item d-flex justify-content-between align-items-center" href="/hr-portal/pages/manage_tickets.php">
@@ -180,6 +180,7 @@ $interview_portal_url = $is_local
                             </a>
                         </li>
                     <?php endif; ?>
+                    <li><a class="dropdown-item" href="/hr-portal/pages/ticket_history.php">Ticket History</a></li>
                 </ul>
             </div>
 
