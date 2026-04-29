@@ -249,9 +249,81 @@ $absent_stats = $stmt->get_result()->fetch_assoc();
         .table th {
             background-color: #f8f9fa;
         }
+        .rating-stars {
+            font-size: 1.2rem;
+        }
+        .rating-stars .fas {
+            margin-right: 2px;
+        }
+        .review-comments {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #6B73FF;
+        }
+        .timeline {
+            position: relative;
+            padding-left: 30px;
+        }
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 15px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #e9ecef;
+        }
+        .timeline-item {
+            position: relative;
+            margin-bottom: 20px;
+        }
+        .timeline-marker {
+            position: absolute;
+            left: -22px;
+            top: 20px;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            border: 3px solid white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            z-index: 1;
+        }
+        .timeline-content {
+            margin-left: 10px;
+        }
+        .leave-reason {
+            background-color: #f8f9fa;
+            padding: 10px 15px;
+            border-radius: 6px;
+            margin-top: 10px;
+        }
+        .modal .info-label {
+            color: #6c757d;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        .modal .info-value {
+            color: #2c3e50;
+            font-weight: 500;
+            margin-bottom: 15px;
+        }
         @media (max-width: 992px) {
             .main-content {
                 margin-left: 0;
+            }
+            .timeline {
+                padding-left: 20px;
+            }
+            .timeline-marker {
+                left: -15px;
+                width: 24px;
+                height: 24px;
             }
         }
     </style>
@@ -529,81 +601,340 @@ $absent_stats = $stmt->get_result()->fetch_assoc();
 
             <!-- Performance Reviews -->
             <div class="info-card">
-                <h4 class="section-title">Performance Reviews</h4>
-                <div class="table-responsive">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>Review Date</th>
-                                <th>Reviewer</th>
-                                <th>Rating</th>
-                                <th>Comments</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php 
-                            $performance_reviews->data_seek(0); // Reset pointer
-                            while ($review = $performance_reviews->fetch_assoc()): ?>
-                                <tr>
-                                    <td><?php echo date('d M Y', strtotime($review['review_date'])); ?></td>
-                                    <td><?php echo htmlspecialchars($review['reviewer_name'] ?? 'N/A'); ?></td>
-                                    <td>
-                                        <div class="progress" style="height: 5px;">
-                                            <div class="progress-bar bg-warning" style="width: <?php echo ($review['rating'] / 5) * 100; ?>%"></div>
+                <h4 class="section-title">
+                    <i class="fas fa-star text-warning me-2"></i>Performance Reviews
+                </h4>
+                <?php
+                $performance_reviews->data_seek(0); // Reset pointer
+                if ($performance_reviews->num_rows > 0):
+                ?>
+                    <div class="row">
+                        <?php while ($review = $performance_reviews->fetch_assoc()): ?>
+                            <div class="col-md-6 mb-4">
+                                <div class="card border-0 shadow-sm h-100">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-start mb-3">
+                                            <div>
+                                                <h6 class="card-title mb-1">
+                                                    <i class="fas fa-calendar-alt text-muted me-2"></i>
+                                                    <?php echo date('M d, Y', strtotime($review['review_date'])); ?>
+                                                </h6>
+                                                <small class="text-muted">
+                                                    <i class="fas fa-user-tie me-1"></i>
+                                                    Reviewed by <?php echo htmlspecialchars($review['reviewer_name'] ?? 'N/A'); ?>
+                                                </small>
+                                            </div>
+                                            <div class="text-end">
+                                                <div class="rating-stars mb-1">
+                                                    <?php for ($i = 1; $i <= 5; $i++): ?>
+                                                        <i class="fas fa-star <?php echo $i <= $review['rating'] ? 'text-warning' : 'text-muted'; ?>"></i>
+                                                    <?php endfor; ?>
+                                                </div>
+                                                <small class="text-muted fw-bold"><?php echo $review['rating']; ?>/5</small>
+                                            </div>
                                         </div>
-                                        <?php echo $review['rating']; ?>/5
-                                    </td>
-                                    <td><?php echo nl2br(htmlspecialchars($review['comments'])); ?></td>
-                                </tr>
-                            <?php endwhile; ?>
-                        </tbody>
-                    </table>
-                </div>
+                                        <?php if (!empty($review['comments'])): ?>
+                                            <div class="review-comments">
+                                                <p class="mb-2 text-dark">
+                                                    <i class="fas fa-quote-left text-muted me-2"></i>
+                                                    <?php
+                                                    $truncated_comments = strlen($review['comments']) > 100 ?
+                                                        substr($review['comments'], 0, 100) . '...' :
+                                                        $review['comments'];
+                                                    echo nl2br(htmlspecialchars($truncated_comments));
+                                                    ?>
+                                                </p>
+                                                <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#reviewModal<?php echo $review['review_id']; ?>">
+                                                    <i class="fas fa-eye me-1"></i>View Details
+                                                </button>
+                                            </div>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                            </div>
+                        <?php endwhile; ?>
+                    </div>
+                <?php else: ?>
+                    <div class="text-center py-4">
+                        <i class="fas fa-star-half-alt fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">No performance reviews available yet.</p>
+                    </div>
+                <?php endif; ?>
             </div>
 
             <!-- Leave History -->
             <div class="info-card">
-                <h4 class="section-title">Leave History</h4>
-                <div class="table-responsive">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>Leave Type</th>
-                                <th>Start Date</th>
-                                <th>End Date</th>
-                                <th>Status</th>
-                                <th>Reason</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php if ($leave_history && $leave_history->num_rows > 0): ?>
-                                <?php while ($leave = $leave_history->fetch_assoc()): ?>
-                                    <tr>
-                                        <td><?php echo htmlspecialchars($leave['leave_type']); ?></td>
-                                        <td><?php echo date('d M Y', strtotime($leave['start_date'])); ?></td>
-                                        <td><?php echo date('d M Y', strtotime($leave['end_date'])); ?></td>
-                                        <td>
-                                            <span class="badge bg-<?php 
-                                                echo $leave['status'] === 'Approved' ? 'success' : 
-                                                    ($leave['status'] === 'Rejected' ? 'danger' : 'warning'); 
-                                            ?>">
-                                                <?php echo htmlspecialchars($leave['status']); ?>
-                                            </span>
-                                        </td>
-                                        <td><?php echo nl2br(htmlspecialchars($leave['reason'])); ?></td>
-                                    </tr>
-                                <?php endwhile; ?>
-                            <?php else: ?>
-                                <tr>
-                                    <td colspan="5" class="text-center">No leave records found</td>
-                                </tr>
-                            <?php endif; ?>
-                        </tbody>
-                    </table>
+                <h4 class="section-title">
+                    <i class="fas fa-calendar-times text-info me-2"></i>Leave History
+                </h4>
+                <?php if ($leave_history && $leave_history->num_rows > 0): ?>
+                    <div class="timeline">
+                        <?php while ($leave = $leave_history->fetch_assoc()):
+                            $start_date = strtotime($leave['start_date']);
+                            $end_date = strtotime($leave['end_date']);
+                            $duration = ceil(($end_date - $start_date) / (60*60*24)) + 1; // Including end date
+
+                            $status_class = '';
+                            $status_icon = '';
+                            if ($leave['status'] === 'Approved') {
+                                $status_class = 'success';
+                                $status_icon = 'fas fa-check-circle';
+                            } elseif ($leave['status'] === 'Rejected') {
+                                $status_class = 'danger';
+                                $status_icon = 'fas fa-times-circle';
+                            } else {
+                                $status_class = 'warning';
+                                $status_icon = 'fas fa-clock';
+                            }
+
+                            $leave_icon = '';
+                            switch (strtolower($leave['leave_type'])) {
+                                case 'sick leave':
+                                    $leave_icon = 'fas fa-thermometer-half';
+                                    break;
+                                case 'casual leave':
+                                    $leave_icon = 'fas fa-umbrella-beach';
+                                    break;
+                                case 'annual leave':
+                                    $leave_icon = 'fas fa-plane';
+                                    break;
+                                case 'maternity leave':
+                                    $leave_icon = 'fas fa-baby';
+                                    break;
+                                default:
+                                    $leave_icon = 'fas fa-calendar-day';
+                            }
+                        ?>
+                            <div class="timeline-item mb-4">
+                                <div class="timeline-marker bg-<?php echo $status_class; ?>">
+                                    <i class="<?php echo $status_icon; ?>"></i>
+                                </div>
+                                <div class="timeline-content">
+                                    <div class="card border-0 shadow-sm">
+                                        <div class="card-body">
+                                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                                <div>
+                                                    <h6 class="card-title mb-1">
+                                                        <i class="<?php echo $leave_icon; ?> text-primary me-2"></i>
+                                                        <?php echo htmlspecialchars($leave['leave_type']); ?>
+                                                    </h6>
+                                                    <small class="text-muted">
+                                                        <i class="fas fa-calendar-alt me-1"></i>
+                                                        <?php echo date('M d, Y', $start_date); ?> - <?php echo date('M d, Y', $end_date); ?>
+                                                        <span class="badge bg-light text-dark ms-2"><?php echo $duration; ?> day<?php echo $duration > 1 ? 's' : ''; ?></span>
+                                                    </small>
+                                                </div>
+                                                <span class="badge bg-<?php echo $status_class; ?> fs-6">
+                                                    <i class="<?php echo $status_icon; ?> me-1"></i>
+                                                    <?php echo htmlspecialchars($leave['status']); ?>
+                                                </span>
+                                            </div>
+                                            <?php if (!empty($leave['reason'])): ?>
+                                                <div class="leave-reason">
+                                                    <p class="mb-2 text-muted small">
+                                                        <i class="fas fa-comment-dots me-2"></i>
+                                                        <?php
+                                                        $truncated_reason = strlen($leave['reason']) > 80 ?
+                                                            substr($leave['reason'], 0, 80) . '...' :
+                                                            $leave['reason'];
+                                                        echo nl2br(htmlspecialchars($truncated_reason));
+                                                        ?>
+                                                    </p>
+                                                    <button type="button" class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#leaveModal<?php echo $leave['leave_id']; ?>">
+                                                        <i class="fas fa-eye me-1"></i>View Details
+                                                    </button>
+                                                </div>
+                                            <?php else: ?>
+                                                <div class="mt-2">
+                                                    <button type="button" class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#leaveModal<?php echo $leave['leave_id']; ?>">
+                                                        <i class="fas fa-eye me-1"></i>View Details
+                                                    </button>
+                                                </div>
+                                            <?php endif; ?>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        <?php endwhile; ?>
+                    </div>
+                <?php else: ?>
+                    <div class="text-center py-4">
+                        <i class="fas fa-calendar-check fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">No leave records found.</p>
+                    </div>
+                <?php endif; ?>
+            </div>
+        </div>
+    </div>
+
+    <!-- Performance Review Modals -->
+    <?php
+    $performance_reviews->data_seek(0); // Reset pointer
+    while ($review = $performance_reviews->fetch_assoc()):
+    ?>
+    <div class="modal fade" id="reviewModal<?php echo $review['review_id']; ?>" tabindex="-1" aria-labelledby="reviewModalLabel<?php echo $review['review_id']; ?>" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="reviewModalLabel<?php echo $review['review_id']; ?>">
+                        <i class="fas fa-star text-warning me-2"></i>Performance Review Details
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="info-label">Review Date</div>
+                            <div class="info-value"><?php echo date('F d, Y', strtotime($review['review_date'])); ?></div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-label">Reviewer</div>
+                            <div class="info-value"><?php echo htmlspecialchars($review['reviewer_name'] ?? 'N/A'); ?></div>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="info-label">Rating</div>
+                            <div class="info-value">
+                                <div class="rating-stars mb-2">
+                                    <?php for ($i = 1; $i <= 5; $i++): ?>
+                                        <i class="fas fa-star <?php echo $i <= $review['rating'] ? 'text-warning' : 'text-muted'; ?> fa-lg"></i>
+                                    <?php endfor; ?>
+                                </div>
+                                <strong><?php echo $review['rating']; ?>/5</strong>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-label">Employee</div>
+                            <div class="info-value"><?php echo htmlspecialchars($employee['full_name']); ?></div>
+                        </div>
+                    </div>
+                    <?php if (!empty($review['comments'])): ?>
+                        <div class="mb-3">
+                            <div class="info-label">Comments</div>
+                            <div class="info-value">
+                                <div class="bg-light p-3 rounded">
+                                    <i class="fas fa-quote-left text-muted me-2"></i>
+                                    <?php echo nl2br(htmlspecialchars($review['comments'])); ?>
+                                </div>
+                            </div>
+                        </div>
+                    <?php endif; ?>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                 </div>
             </div>
         </div>
     </div>
+    <?php endwhile; ?>
+
+    <!-- Leave History Modals -->
+    <?php
+    $leave_history->data_seek(0); // Reset pointer
+    while ($leave = $leave_history->fetch_assoc()):
+        $start_date = strtotime($leave['start_date']);
+        $end_date = strtotime($leave['end_date']);
+        $duration = ceil(($end_date - $start_date) / (60*60*24)) + 1;
+
+        $status_class = '';
+        if ($leave['status'] === 'Approved') {
+            $status_class = 'success';
+        } elseif ($leave['status'] === 'Rejected') {
+            $status_class = 'danger';
+        } else {
+            $status_class = 'warning';
+        }
+
+        $leave_icon = '';
+        switch (strtolower($leave['leave_type'])) {
+            case 'sick leave':
+                $leave_icon = 'fas fa-thermometer-half';
+                break;
+            case 'casual leave':
+                $leave_icon = 'fas fa-umbrella-beach';
+                break;
+            case 'annual leave':
+                $leave_icon = 'fas fa-plane';
+                break;
+            case 'maternity leave':
+                $leave_icon = 'fas fa-baby';
+                break;
+            default:
+                $leave_icon = 'fas fa-calendar-day';
+        }
+    ?>
+    <div class="modal fade" id="leaveModal<?php echo $leave['leave_id']; ?>" tabindex="-1" aria-labelledby="leaveModalLabel<?php echo $leave['leave_id']; ?>" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="leaveModalLabel<?php echo $leave['leave_id']; ?>">
+                        <i class="<?php echo $leave_icon; ?> text-primary me-2"></i>Leave Details
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="info-label">Leave Type</div>
+                            <div class="info-value">
+                                <i class="<?php echo $leave_icon; ?> text-primary me-2"></i>
+                                <?php echo htmlspecialchars($leave['leave_type']); ?>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-label">Status</div>
+                            <div class="info-value">
+                                <span class="badge bg-<?php echo $status_class; ?> fs-6">
+                                    <i class="fas fa-<?php echo $leave['status'] === 'Approved' ? 'check' : ($leave['status'] === 'Rejected' ? 'times' : 'clock'); ?>-circle me-1"></i>
+                                    <?php echo htmlspecialchars($leave['status']); ?>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <div class="info-label">Start Date</div>
+                            <div class="info-value"><?php echo date('F d, Y', $start_date); ?></div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="info-label">End Date</div>
+                            <div class="info-value"><?php echo date('F d, Y', $end_date); ?></div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="info-label">Duration</div>
+                            <div class="info-value"><strong><?php echo $duration; ?> day<?php echo $duration > 1 ? 's' : ''; ?></strong></div>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="info-label">Applied On</div>
+                            <div class="info-value"><?php echo date('F d, Y', strtotime($leave['applied_on'])); ?></div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-label">Employee</div>
+                            <div class="info-value"><?php echo htmlspecialchars($employee['full_name']); ?></div>
+                        </div>
+                    </div>
+                    <?php if (!empty($leave['reason'])): ?>
+                        <div class="mb-3">
+                            <div class="info-label">Reason</div>
+                            <div class="info-value">
+                                <div class="bg-light p-3 rounded">
+                                    <i class="fas fa-comment-dots text-muted me-2"></i>
+                                    <?php echo nl2br(htmlspecialchars($leave['reason'])); ?>
+                                </div>
+                            </div>
+                        </div>
+                    <?php endif; ?>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <?php endwhile; ?>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
